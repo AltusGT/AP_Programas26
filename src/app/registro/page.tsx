@@ -1,3 +1,5 @@
+'use client'
+
 import { useRouter, useSearchParams } from 'next/navigation'
 import React, { Suspense } from 'react'
 import TerapeutaFlow from '@/components/dashboard/TerapeutaFlow'
