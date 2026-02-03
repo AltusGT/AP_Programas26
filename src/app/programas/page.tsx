@@ -229,9 +229,11 @@ export default function ProgramasCatalogPage() {
                                             <BookOpen size={32} />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h3 className="text-2xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{prog.nombre}</h3>
-                                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${prog.tipo === 'Educativo' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                                                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight break-words">
+                                                    {prog.nombre}
+                                                </h3>
+                                                <span className={`inline-flex w-fit px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 ${prog.tipo === 'Educativo' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
                                                     {prog.tipo || 'Terapéutico'}
                                                 </span>
                                             </div>

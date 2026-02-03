@@ -80,7 +80,7 @@ export default function EstudiantesPage() {
                 ocp: selectedOcp.numero_ocp,
                 criterio: selectedOcp.criterio,
                 estado: 'Abierto',
-                fecha_inicio: new Date().toISOString().split('T')[0]
+                fecha_inicio: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' })
             }])
 
             if (error) throw error

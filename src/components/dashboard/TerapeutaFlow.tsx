@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { Estudiante, ProgramaActivo, ProgramaOCP, RegistroFormData, Database } from '@/types'
-import { SupabaseClient } from '@supabase/supabase-js'
-import { ChevronRight, ChevronLeft, User, BookOpen, Target, Calendar, CheckCircle2, TrendingUp, Info, Search } from 'lucide-react'
+import { ChevronRight, ChevronLeft, User, BookOpen, Target, Calendar, CheckCircle2, TrendingUp, Info, Search, AlertCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export default function TerapeutaFlow() {
@@ -16,18 +15,22 @@ export default function TerapeutaFlow() {
 
     // Data lists
     const [estudiantes, setEstudiantes] = useState<Estudiante[]>([])
-    const [programasActivos, setProgramasActivos] = useState<ProgramaActivo[]>([])
+    const [programasActivos, setProgramasActivos] = useState<any[]>([])
 
     // Selection state
     const [selectedEstudiante, setSelectedEstudiante] = useState<string | null>(null)
-    const [selectedProgramName, setSelectedProgramName] = useState<string | null>(null) // NEW: For Step 2
-    const [selectedPrograma, setSelectedPrograma] = useState<ProgramaActivo | null>(null) // The specific assignment
+    const [selectedProgramName, setSelectedProgramName] = useState<string | null>(null)
+    const [selectedPrograma, setSelectedPrograma] = useState<any | null>(null)
     const [registroTipo, setRegistroTipo] = useState<'Inicial' | 'Final' | 'Generalización' | null>(null)
-    // Removed selectedOcp (it's part of selectedPrograma now)
 
     // Data entry state
     const [resultado, setResultado] = useState<string>('')
-    const [fecha, setFecha] = useState<string>(new Date().toISOString().split('T')[0])
+
+    // Guatemala Timezone Helper (YYYY-MM-DD)
+    const getGuatemalaDate = () => {
+        return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' })
+    }
+    const [fecha, setFecha] = useState<string>(getGuatemalaDate())
 
     useEffect(() => {
         fetchInitialData()
@@ -48,10 +51,12 @@ export default function TerapeutaFlow() {
     async function fetchProgramasForEstudiante(nombre: string) {
         try {
             setLoading(true)
+            // Fetch directly from table to ensure we have the ID for updates
             const { data: progs } = await supabase
-                .from('vista_programas_activos')
+                .from('registros_programas')
                 .select('*')
                 .eq('estudiante', nombre)
+                .eq('estado', 'Abierto')
             setProgramasActivos(progs || [])
         } catch (error) {
             console.error('Error fetching programs:', error)
@@ -60,32 +65,30 @@ export default function TerapeutaFlow() {
         }
     }
 
-    // Removed fetchOcpsForPrograma as it's no longer needed with the new flow
-
     const handleSelectEstudiante = (nombre: string) => {
         setSelectedEstudiante(nombre)
         fetchProgramasForEstudiante(nombre)
         setStep(2)
     }
 
-    // NEW: Handles selection of Program Name (group)
     const handleSelectProgramName = (nombre: string) => {
         setSelectedProgramName(nombre)
         setStep(3)
     }
 
-    // NEW: Handles selection of specific OCP Assignment
-    const handleSelectAssignment = (assignment: ProgramaActivo) => {
+    const handleSelectAssignment = (assignment: any) => {
         setSelectedPrograma(assignment)
         setStep(4)
     }
 
     const handleSelectTipo = (tipo: 'Inicial' | 'Final' | 'Generalización') => {
         setRegistroTipo(tipo)
+        // Reset result when changing type
+        if (tipo === 'Inicial') setResultado(selectedPrograma?.pre_test?.toString() || '')
+        else if (tipo === 'Final') setResultado(selectedPrograma?.post_test?.toString() || '')
+        else setResultado('')
         setStep(5)
     }
-
-    // Removed handleSelectOcp as it's no longer needed
 
     const handleSave = async () => {
         if (!selectedPrograma || !resultado) return
@@ -93,21 +96,23 @@ export default function TerapeutaFlow() {
         try {
             setSaving(true)
             const valor = parseFloat(resultado)
+            const recordId = selectedPrograma.id
+
+            if (!recordId) {
+                throw new Error('No se pudo identificar el registro para actualizar.')
+            }
 
             let updateData: any = {}
 
             if (registroTipo === 'Inicial') {
                 updateData = { pre_test: valor }
             } else if (registroTipo === 'Final') {
-                // Para el final, usamos la función cerrar_programa o actualizamos post_test
-                const { error } = await (supabase.rpc as any)('cerrar_programa', {
-                    p_registro_id: (selectedPrograma as any).id,
-                    p_fecha_final: fecha,
-                    p_post_test: valor
-                })
-                if (error) throw error
+                updateData = {
+                    post_test: valor,
+                    fecha_final: fecha,
+                    estado: 'Logrado'
+                }
             } else if (registroTipo === 'Generalización') {
-                // Lógica de "la siguiente disponible"
                 if (selectedPrograma.resultado_g1 === null) {
                     updateData = { fecha_g1: fecha, resultado_g1: valor }
                 } else if (selectedPrograma.resultado_g2 === null) {
@@ -115,26 +120,24 @@ export default function TerapeutaFlow() {
                 } else if (selectedPrograma.resultado_g3 === null) {
                     updateData = { fecha_g3: fecha, resultado_g3: valor }
                 } else {
-                    alert('Todas las generalizaciones (G1, G2, G3) ya han sido registradas para este OCP.')
+                    alert('Todas las generalizaciones (G1, G2, G3) ya han sido registradas.')
                     setSaving(false)
                     return
                 }
             }
 
-            if (registroTipo !== 'Final') {
-                const { error } = await (supabase
-                    .from('registros_programas') as any)
-                    .update(updateData)
-                    .eq('id', (selectedPrograma as any).id)
+            const { error } = await (supabase
+                .from('registros_programas') as any)
+                .update(updateData)
+                .eq('id', recordId)
 
-                if (error) throw error
-            }
+            if (error) throw error
 
-            // Success! Reset and show dashboard
-            alert('Registro guardado exitosamente')
+            alert('¡Registro guardado exitosamente!')
             window.location.reload()
 
         } catch (error: any) {
+            console.error('Error saving:', error)
             alert(`Error al guardar: ${error.message}`)
         } finally {
             setSaving(false)
@@ -143,174 +146,175 @@ export default function TerapeutaFlow() {
 
     const getNextGeneralizationLabel = () => {
         if (!selectedPrograma) return 'G1'
-        if (selectedPrograma.resultado_g1 === null) return 'G1'
-        if (selectedPrograma.resultado_g2 === null) return 'G2'
-        if (selectedPrograma.resultado_g3 === null) return 'G3'
+        if (selectedPrograma.resultado_g1 === null || selectedPrograma.resultado_g1 === undefined) return 'G1'
+        if (selectedPrograma.resultado_g2 === null || selectedPrograma.resultado_g2 === undefined) return 'G2'
+        if (selectedPrograma.resultado_g3 === null || selectedPrograma.resultado_g3 === undefined) return 'G3'
         return 'Completo'
     }
 
     return (
-        <div className="max-w-4xl mx-auto py-6 px-4">
+        <div className="max-w-4xl mx-auto py-8 px-4 pb-20">
             {/* Progress Header */}
-            <div className="flex items-center justify-between mb-8 overflow-x-auto pb-2">
+            <div className="flex items-center justify-between mb-12 overflow-x-auto pb-4 no-scrollbar">
                 {[1, 2, 3, 4, 5].map((s) => (
-                    <div key={s} className="flex items-center">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${step === s ? 'bg-blue-600 text-white border-4 border-blue-100' :
-                            step > s ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-500'
+                    <div key={s} className="flex items-center shrink-0">
+                        <div className={`w-12 h-12 rounded-[18px] flex items-center justify-center font-black transition-all shadow-lg ${step === s ? 'bg-blue-600 text-white scale-110 ring-4 ring-blue-100 shadow-blue-200' :
+                            step > s ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'
                             }`}>
                             {s}
                         </div>
-                        {s < 5 && <div className={`w-8 md:w-16 h-1 mx-2 rounded-full ${step > s ? 'bg-green-500' : 'bg-slate-200'}`} />}
+                        {s < 5 && <div className={`w-6 md:w-12 h-1.5 mx-2 rounded-full ${step > s ? 'bg-emerald-500' : 'bg-slate-100'}`} />}
                     </div>
                 ))}
             </div>
 
-            <div className="card p-6 md:p-10 shadow-xl border-slate-100">
+            <div className="bg-white rounded-[40px] p-6 md:p-12 shadow-2xl shadow-slate-200/60 border border-white relative overflow-hidden">
+                {/* Background Decoration */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-bl-[100px] -z-10" />
 
                 {/* Step 1: Seleccionar Niño */}
                 {step === 1 && (
                     <div className="animate-fade-in">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
-                                <User size={24} />
+                        <div className="flex items-center gap-5 mb-10">
+                            <div className="w-16 h-16 bg-blue-600 text-white rounded-[24px] flex items-center justify-center shadow-xl shadow-blue-100">
+                                <User size={32} />
                             </div>
-                            <div className="flex-1">
-                                <h2 className="text-2xl font-bold text-slate-900">Seleccionar Niño</h2>
-                                <p className="text-slate-500">¿Para quién es el registro?</p>
+                            <div>
+                                <h1 className="text-3xl font-black text-slate-900 tracking-tight">Seleccionar Niño</h1>
+                                <p className="text-slate-500 font-medium">¿Para quién es el registro hoy?</p>
                             </div>
                         </div>
 
-                        {loading && <div className="spinner mx-auto" />}
+                        {loading && <div className="flex justify-center py-20"><div className="spinner" /></div>}
 
-                        <div className="mb-6 sticky top-0 bg-white z-10 py-2">
+                        <div className="mb-8 sticky top-0 bg-white/80 backdrop-blur-md z-10 py-2">
                             <div className="relative">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={24} />
                                 <input
                                     type="text"
-                                    placeholder="Buscar estudiante..."
+                                    placeholder="Buscar por nombre..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 transition-all outline-none"
+                                    className="input pl-14 h-16 rounded-2xl text-lg font-bold"
                                 />
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto max-h-[60vh]">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto max-h-[50vh] pr-2 custom-scrollbar">
                             {estudiantes
                                 .filter(est => est.nombre.toLowerCase().includes(searchTerm.toLowerCase()))
                                 .map((est) => (
                                     <button
                                         key={est.id}
                                         onClick={() => handleSelectEstudiante(est.nombre)}
-                                        className="p-3 text-left border border-slate-100 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group flex flex-col justify-between h-full shadow-sm hover:shadow-md"
+                                        className="group p-5 text-left bg-slate-50 rounded-3xl hover:bg-blue-600 transition-all flex flex-col items-center justify-center gap-4 border-2 border-transparent hover:border-blue-100 hover:shadow-xl hover:shadow-blue-200/50"
                                     >
-                                        <div className="flex items-center justify-between w-full mb-2">
-                                            <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold text-xs uppercase">
-                                                {est.nombre.substring(0, 2)}
-                                            </div>
-                                            <div className={`w-2 h-2 rounded-full ${est.activo ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                        <div className="w-16 h-16 bg-white text-blue-600 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm group-hover:scale-110 transition-transform">
+                                            {est.nombre.substring(0, 1)}
                                         </div>
-                                        <span className="font-bold text-slate-700 text-sm group-hover:text-blue-700 line-clamp-2 leading-tight">
+                                        <span className="font-bold text-slate-700 text-sm group-hover:text-white text-center leading-tight">
                                             {est.nombre}
                                         </span>
                                     </button>
                                 ))}
-                            {estudiantes.filter(est => est.nombre.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
-                                <div className="col-span-full py-8 text-center text-slate-400 italic">
-                                    No se encontraron estudiantes
+                            {estudiantes.length === 0 && !loading && (
+                                <div className="col-span-full py-20 text-center">
+                                    <p className="text-slate-400 font-bold text-lg italic">No se encontraron estudiantes activos.</p>
                                 </div>
                             )}
                         </div>
                     </div>
                 )}
 
-                {/* Step 2: Seleccionar Programa (Agrupado) */}
+                {/* Step 2: Seleccionar Programa */}
                 {step === 2 && (
                     <div className="animate-fade-in">
-                        <button onClick={() => setStep(1)} className="flex items-center gap-2 text-slate-400 hover:text-slate-600 mb-6 text-sm font-bold">
-                            <ChevronLeft size={16} /> Volver
+                        <button onClick={() => setStep(1)} className="flex items-center gap-2 text-slate-400 hover:text-slate-800 mb-8 font-black text-sm uppercase tracking-widest transition-colors">
+                            <ChevronLeft size={20} /> Volver
                         </button>
 
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
-                                <BookOpen size={24} />
+                        <div className="flex items-center gap-5 mb-10">
+                            <div className="w-16 h-16 bg-emerald-500 text-white rounded-[24px] flex items-center justify-center shadow-xl shadow-emerald-100">
+                                <BookOpen size={32} />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold text-slate-900">Seleccionar Programa</h2>
-                                <p className="text-slate-500">Programas activos para {selectedEstudiante}</p>
+                                <h1 className="text-3xl font-black text-slate-900 tracking-tight">Seleccionar Programa</h1>
+                                <p className="text-slate-500 font-medium italic">Asignaciones activas para <span className="text-blue-600 font-bold not-italic">{selectedEstudiante}</span></p>
                             </div>
                         </div>
 
-                        {loading && <div className="spinner mx-auto" />}
+                        {loading && <div className="flex justify-center py-20"><div className="spinner" /></div>}
 
-                        <div className="space-y-3 mt-8">
+                        <div className="space-y-4">
                             {programasActivos.length > 0 ? (
                                 Array.from(new Set(programasActivos.map(p => p.programa))).map((progNombre) => {
                                     const ocpCount = programasActivos.filter(p => p.programa === progNombre).length
-                                    const firstOcc = programasActivos.find(p => p.programa === progNombre)
-
                                     return (
                                         <button
                                             key={progNombre}
                                             onClick={() => handleSelectProgramName(progNombre)}
-                                            className="w-full p-5 text-left border-2 border-slate-100 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50 transition-all group flex items-center justify-between"
+                                            className="w-full p-8 text-left bg-slate-50 rounded-[32px] hover:bg-emerald-50 border-2 border-transparent hover:border-emerald-200 transition-all group flex items-center justify-between shadow-sm hover:shadow-xl hover:shadow-emerald-100/50"
                                         >
-                                            <div>
-                                                <h3 className="font-bold text-lg text-slate-900 group-hover:text-emerald-700">{progNombre}</h3>
-                                                <span className="text-sm text-slate-400 font-medium">{ocpCount} objetivos activos (OCPs)</span>
+                                            <div className="flex items-center gap-6">
+                                                <div className="w-14 h-14 bg-white text-emerald-600 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                                    <BookOpen size={28} />
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-black text-xl text-slate-900 group-hover:text-emerald-700 uppercase tracking-tight">{progNombre}</h3>
+                                                    <span className="text-sm text-slate-400 font-bold uppercase tracking-widest">{ocpCount} Objetivos Activos</span>
+                                                </div>
                                             </div>
-                                            <div className="w-10 h-10 rounded-full bg-slate-50 group-hover:bg-emerald-200 flex items-center justify-center transition-colors">
-                                                <ChevronRight size={20} className="text-slate-300 group-hover:text-emerald-700" />
-                                            </div>
+                                            <ChevronRight size={28} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
                                         </button>
                                     )
                                 })
-                            ) : (
-                                <div className="p-10 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-                                    <p className="text-slate-500 font-medium">No hay programas activos para este niño.</p>
-                                    <button onClick={() => router.push('/registro')} className="btn btn-primary mt-4">Asignar Nuevo Programa</button>
+                            ) : !loading && (
+                                <div className="p-16 text-center bg-slate-50 rounded-[40px] border-4 border-dashed border-slate-200">
+                                    <AlertCircle className="mx-auto text-slate-300 mb-4" size={48} />
+                                    <p className="text-slate-500 font-bold text-lg">No hay programas asignados.</p>
+                                    <button onClick={() => router.push('/registro')} className="btn btn-primary mt-6 h-14 px-8 rounded-2xl">Asignar Nuevo</button>
                                 </div>
                             )}
                         </div>
                     </div>
                 )}
 
-                {/* Step 3: Seleccionar OCP (Asignado) */}
+                {/* Step 3: Seleccionar OCP */}
                 {step === 3 && (
                     <div className="animate-fade-in">
-                        <button onClick={() => setStep(2)} className="flex items-center gap-2 text-slate-400 hover:text-slate-600 mb-6 text-sm font-bold">
-                            <ChevronLeft size={16} /> Volver
+                        <button onClick={() => setStep(2)} className="flex items-center gap-2 text-slate-400 hover:text-slate-800 mb-8 font-black text-sm uppercase tracking-widest transition-colors">
+                            <ChevronLeft size={20} /> Volver
                         </button>
 
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center">
-                                <Target size={24} />
+                        <div className="flex items-center gap-5 mb-10">
+                            <div className="w-16 h-16 bg-purple-600 text-white rounded-[24px] flex items-center justify-center shadow-xl shadow-purple-100">
+                                <Target size={32} />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold text-slate-900">Seleccionar Objetivo</h2>
-                                <p className="text-slate-500">OCPs activos de <span className="font-bold text-purple-600">{selectedProgramName}</span></p>
+                                <h1 className="text-3xl font-black text-slate-900 tracking-tight">Seleccionar OCP</h1>
+                                <p className="text-slate-500 font-medium">{selectedProgramName}</p>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-3">
+                        <div className="grid grid-cols-1 gap-4">
                             {programasActivos.filter(p => p.programa === selectedProgramName).map((asignacion) => (
                                 <button
                                     key={asignacion.id}
                                     onClick={() => handleSelectAssignment(asignacion)}
-                                    className="p-5 text-left border-2 border-slate-100 rounded-2xl hover:border-purple-500 hover:bg-purple-50 transition-all group flex items-start gap-4"
+                                    className="p-8 text-left bg-slate-50 rounded-[32px] hover:bg-purple-50 border-2 border-transparent hover:border-purple-200 transition-all group flex items-start gap-6 shadow-sm hover:shadow-xl hover:shadow-purple-100/50"
                                 >
-                                    <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-sm shrink-0">
-                                        OCP {asignacion.ocp}
+                                    <div className="w-14 h-14 bg-white text-purple-700 font-black rounded-2xl flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition-transform shrink-0">
+                                        {asignacion.ocp}
                                     </div>
                                     <div className="flex-1">
-                                        <p className="font-medium text-slate-800 leading-snug group-hover:text-purple-900">{asignacion.criterio}</p>
-                                        <div className="flex gap-2 mt-2">
-                                            <span className="text-[10px] uppercase font-bold text-slate-400 bg-white px-2 py-1 rounded border border-slate-100">
+                                        <p className="font-bold text-slate-700 text-lg leading-snug group-hover:text-purple-900 line-clamp-2">{asignacion.criterio}</p>
+                                        <div className="flex gap-3 mt-3">
+                                            <span className="text-[10px] uppercase font-black text-slate-400 bg-white px-3 py-1 rounded-full border border-slate-100 shadow-sm">
                                                 Iniciado: {new Date(asignacion.fecha_inicio).toLocaleDateString()}
                                             </span>
                                         </div>
                                     </div>
-                                    <ChevronRight className="text-slate-300 group-hover:text-purple-500 mt-2" />
+                                    <ChevronRight className="text-slate-300 group-hover:text-purple-500 mt-4" />
                                 </button>
                             ))}
                         </div>
@@ -320,102 +324,124 @@ export default function TerapeutaFlow() {
                 {/* Step 4: Tipo de Registro */}
                 {step === 4 && (
                     <div className="animate-fade-in">
-                        <button onClick={() => setStep(3)} className="flex items-center gap-2 text-slate-400 hover:text-slate-600 mb-6 text-sm font-bold">
-                            <ChevronLeft size={16} /> Volver
+                        <button onClick={() => setStep(3)} className="flex items-center gap-2 text-slate-400 hover:text-slate-800 mb-8 font-black text-sm uppercase tracking-widest transition-colors">
+                            <ChevronLeft size={20} /> Volver
                         </button>
 
-                        <div className="mb-8">
-                            <h2 className="text-2xl font-bold text-slate-900">Tipo de Registro</h2>
-                            <p className="text-slate-500">¿Qué vas a registrar hoy?</p>
+                        <div className="mb-10">
+                            <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Fase de Registro</h1>
+                            <p className="text-slate-500 font-medium">Selecciona la etapa técnica para este OCP</p>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-4">
+                        <div className="grid grid-cols-1 gap-5">
+                            {/* PRE-TEST */}
                             <button
                                 onClick={() => handleSelectTipo('Inicial')}
-                                className="p-6 text-left border-2 border-slate-100 rounded-3xl hover:border-blue-500 hover:shadow-lg hover:shadow-blue-100 transition-all flex items-center gap-6 group"
+                                className={`p-8 text-left border-[3px] rounded-[40px] transition-all flex items-center gap-8 group ${selectedPrograma?.pre_test !== null ? 'border-blue-500 bg-blue-50/30' : 'border-slate-100 bg-slate-50 hover:border-blue-400'}`}
                             >
-                                <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                    <Info size={28} />
+                                <div className={`w-20 h-20 rounded-3xl flex items-center justify-center transition-all shadow-lg ${selectedPrograma?.pre_test !== null ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 group-hover:bg-blue-600 group-hover:text-white'}`}>
+                                    <Info size={36} />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="text-xl font-bold text-slate-900 group-hover:text-blue-700">Fase Inicial (Pre-test)</h3>
-                                    <p className="text-slate-500 text-sm">Prueba inicial para establecer línea base.</p>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Fase Inicial</h3>
+                                        {selectedPrograma?.pre_test !== null && <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-black">COMPLETO: {selectedPrograma?.pre_test}%</span>}
+                                    </div>
+                                    <p className="text-slate-500 font-bold">Registro de Línea Base (Pre-test)</p>
                                 </div>
                             </button>
 
+                            {/* POST-TEST */}
                             <button
                                 onClick={() => handleSelectTipo('Final')}
-                                className="p-6 text-left border-2 border-slate-100 rounded-3xl hover:border-green-500 hover:shadow-lg hover:shadow-green-100 transition-all flex items-center gap-6 group"
+                                className="p-8 text-left bg-slate-50 border-[3px] border-slate-100 rounded-[40px] hover:border-emerald-400 transition-all flex items-center gap-8 group"
                             >
-                                <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 group-hover:bg-green-600 group-hover:text-white transition-colors">
-                                    <CheckCircle2 size={28} />
+                                <div className="w-20 h-20 bg-white text-emerald-600 rounded-3xl flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-lg">
+                                    <CheckCircle2 size={36} />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="text-xl font-bold text-slate-900 group-hover:text-green-700">Fase Final (Post-test)</h3>
-                                    <p className="text-slate-500 text-sm">Evaluar si se ha logrado el criterio.</p>
+                                    <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-1">Fase Final</h3>
+                                    <p className="text-slate-500 font-bold">Cierre de OCP (Post-test)</p>
                                 </div>
                             </button>
 
+                            {/* GENERALIZACION */}
                             <button
                                 onClick={() => handleSelectTipo('Generalización')}
-                                className="p-6 text-left border-2 border-slate-100 rounded-3xl hover:border-amber-500 hover:shadow-lg hover:shadow-amber-100 transition-all flex items-center gap-6 group"
+                                className="p-8 text-left bg-slate-50 border-[3px] border-slate-100 rounded-[40px] hover:border-amber-400 transition-all flex items-center gap-8 group"
                             >
-                                <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors">
-                                    <TrendingUp size={28} />
+                                <div className="w-20 h-20 bg-white text-amber-600 rounded-3xl flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-all shadow-lg">
+                                    <TrendingUp size={36} />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="text-xl font-bold text-slate-900 group-hover:text-amber-700">Generalización</h3>
-                                    <p className="text-slate-500 text-sm">Sesión de refuerzo ({getNextGeneralizationLabel()}).</p>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Generalización</h3>
+                                        <span className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full font-black">PENDIENTE: {getNextGeneralizationLabel()}</span>
+                                    </div>
+                                    <p className="text-slate-500 font-bold">Pruebas de mantenimiento y transferencia</p>
                                 </div>
                             </button>
                         </div>
                     </div>
                 )}
+
                 {/* Step 5: Registro de Datos */}
                 {step === 5 && (
-                    <div className="animate-fade-in">
-                        <button onClick={() => setStep(4)} className="flex items-center gap-2 text-slate-400 hover:text-slate-600 mb-6 text-sm font-bold">
-                            <ChevronLeft size={16} /> Volver
+                    <div className="animate-fade-in pb-8">
+                        <button onClick={() => setStep(4)} className="flex items-center gap-2 text-slate-400 hover:text-slate-800 mb-8 font-black text-sm uppercase tracking-widest transition-colors">
+                            <ChevronLeft size={20} /> Volver
                         </button>
 
-                        <div className="mb-10 text-center">
-                            <h2 className="text-3xl font-bold text-slate-900 mb-2">Registrar Resultado</h2>
-                            <p className="text-slate-500">
-                                {registroTipo} - {selectedEstudiante}
+                        <div className="mb-12 text-center">
+                            <span className={`inline-block px-6 py-2 rounded-full font-black text-xs uppercase tracking-[0.2em] mb-4 shadow-sm ${registroTipo === 'Inicial' ? 'bg-blue-100 text-blue-700' :
+                                registroTipo === 'Final' ? 'bg-emerald-100 text-emerald-700' :
+                                    'bg-amber-100 text-amber-700'
+                                }`}>
+                                {registroTipo === 'Inicial' ? 'Pre-test (Línea Base)' :
+                                    registroTipo === 'Final' ? 'Post-test (Cierre)' :
+                                        `Generalización ${getNextGeneralizationLabel()}`}
+                            </span>
+                            <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-3">Registrar Puntaje</h1>
+                            <p className="text-slate-500 font-bold text-lg max-w-sm mx-auto">
+                                Ingresa el nivel de logro para <span className="text-blue-600">{selectedEstudiante}</span>
                             </p>
-                            {registroTipo === 'Generalización' && (
-                                <span className="inline-block mt-2 px-4 py-1 bg-amber-100 text-amber-700 rounded-full font-bold text-sm">
-                                    Sesión {getNextGeneralizationLabel()}
-                                </span>
-                            )}
                         </div>
 
-                        <div className="max-w-md mx-auto space-y-8">
-                            <div>
-                                <label className="label text-center block mb-4">Porcentaje de Logro (%)</label>
-                                <div className="relative">
+                        <div className="max-w-md mx-auto space-y-12">
+                            <div className="relative group">
+                                <div className="absolute -inset-4 bg-slate-50 rounded-[40px] -z-10 group-focus-within:bg-blue-50/50 transition-colors" />
+                                <label className="text-center block text-xs font-black text-slate-400 uppercase tracking-widest mb-6 px-10">Porcentaje de Éxito (%)</label>
+                                <div className="relative flex items-center justify-center">
                                     <input
                                         type="number"
+                                        autoFocus
                                         value={resultado}
                                         onChange={(e) => setResultado(e.target.value)}
-                                        placeholder="0.0"
-                                        className="text-center text-6xl font-black text-slate-400 bg-transparent w-full outline-none placeholder:text-slate-200 no-arrows"
+                                        placeholder="0"
+                                        className="text-center text-8xl font-black text-slate-900 bg-transparent w-full outline-none placeholder:text-slate-100 no-arrows"
                                     />
-                                    <span className="absolute right-[20%] top-1/2 -translate-y-1/2 text-4xl font-bold text-slate-300">
-                                        %
-                                    </span>
+                                    <span className="absolute right-0 text-5xl font-black text-slate-200">%</span>
+                                </div>
+                                <div className="w-full h-1 bg-slate-100 rounded-full mt-4 overflow-hidden">
+                                    <div
+                                        className={`h-full transition-all duration-700 ${registroTipo === 'Inicial' ? 'bg-blue-600' :
+                                            registroTipo === 'Final' ? 'bg-emerald-600' :
+                                                'bg-amber-600'
+                                            }`}
+                                        style={{ width: `${Math.min(100, parseFloat(resultado) || 0)}%` }}
+                                    />
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="label block mb-2 font-bold text-slate-700">Fecha del Registro</label>
-                                <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                                    <Calendar className="text-slate-400" />
+                            <div className="space-y-4">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Fecha de Aplicación</label>
+                                <div className="flex items-center gap-5 bg-slate-50 p-6 rounded-3xl border-2 border-transparent focus-within:border-blue-500 focus-within:bg-white transition-all">
+                                    <Calendar className="text-slate-400" size={28} />
                                     <input
                                         type="date"
                                         value={fecha}
                                         onChange={(e) => setFecha(e.target.value)}
-                                        className="bg-transparent font-bold text-slate-700 outline-none w-full"
+                                        className="bg-transparent font-black text-xl text-slate-700 outline-none w-full"
                                     />
                                 </div>
                             </div>
@@ -423,15 +449,23 @@ export default function TerapeutaFlow() {
                             <button
                                 onClick={handleSave}
                                 disabled={saving || !resultado}
-                                className={`w-full py-5 rounded-3xl text-white font-bold text-lg shadow-xl transition-all ${saving ? 'bg-slate-400' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200 active:scale-95'
+                                className={`w-full py-7 rounded-[32px] text-white font-black text-xl shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-4 ${saving ? 'bg-slate-400 cursor-not-allowed shadow-none' :
+                                    registroTipo === 'Inicial' ? 'bg-blue-600 shadow-blue-200 hover:bg-blue-700' :
+                                        registroTipo === 'Final' ? 'bg-emerald-600 shadow-emerald-200 hover:bg-emerald-700' :
+                                            'bg-amber-600 shadow-amber-200 hover:bg-amber-700'
                                     }`}
                             >
                                 {saving ? (
-                                    <div className="flex items-center justify-center gap-2">
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        Guardando...
-                                    </div>
-                                ) : 'Finalizar Registro'}
+                                    <>
+                                        <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                                        <span>Procesando...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle2 size={28} strokeWidth={2.5} />
+                                        <span>Confirmar y Guardar</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
