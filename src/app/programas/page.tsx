@@ -331,7 +331,7 @@ export default function ProgramasCatalogPage() {
 
                                             {/* Add New OCP Card */}
                                             {/* Add New OCP Card */}
-                                            {editingOcp?.programa_id === prog.id && !editingOcp.id ? (
+                                            {editingOcp && editingOcp.programa_id === prog.id && !editingOcp.id ? (
                                                 <div className="bg-white rounded-[28px] p-6 shadow-xl border-2 border-blue-500 flex flex-col min-h-[200px] animate-scale-in">
                                                     <span className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black bg-blue-600 text-white mb-3">
                                                         {editingOcp?.numero_ocp}
