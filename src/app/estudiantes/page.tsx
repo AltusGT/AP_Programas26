@@ -323,8 +323,9 @@ export default function EstudiantesPage() {
                                                                     }
 
                                                                     try {
+                                                                        const guatemalaDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' })
                                                                         const { error } = await (supabase.from('registros_programas') as any)
-                                                                            .update({ estado: 'Logrado', fecha_final: new Date().toISOString().split('T')[0] })
+                                                                            .update({ estado: 'Logrado', fecha_final: guatemalaDate })
                                                                             .in('id', ids)
 
                                                                         if (error) throw error
@@ -371,8 +372,9 @@ export default function EstudiantesPage() {
                                                                             }
                                                                             if (!confirm('¿Marcar este objetivo como LOGRADO?')) return
                                                                             try {
+                                                                                const guatemalaDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' })
                                                                                 const { error } = await (supabase.from('registros_programas') as any)
-                                                                                    .update({ estado: 'Logrado', fecha_final: new Date().toISOString().split('T')[0] })
+                                                                                    .update({ estado: 'Logrado', fecha_final: guatemalaDate })
                                                                                     .eq('id', assign.id)
                                                                                 if (error) throw error
 

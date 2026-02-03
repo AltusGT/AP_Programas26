@@ -5,8 +5,7 @@ import React, { Suspense } from 'react'
 import TerapeutaFlow from '@/components/dashboard/TerapeutaFlow'
 import { PlusCircle, ClipboardCheck, ArrowLeft } from 'lucide-react'
 import { useRole } from '@/lib/contexts/RoleContext'
-import RegistroForm_Real from '@/components/forms/RegistroForm'
-import { supabase } from '@/lib/supabase/client'
+import SimpleRegistroForm from '@/components/forms/SimpleRegistroForm'
 
 function RegistroContent() {
     const { role } = useRole()
@@ -38,12 +37,10 @@ function RegistroContent() {
                         <p className="text-slate-500 font-medium">Asocia un programa del catálogo a un niño específico.</p>
                     </div>
 
-                    <RegistroForm_Real
-                        onSubmit={async (data) => {
-                            const { error } = await supabase.from('registros_programas').insert([data] as any)
-                            if (error) throw error
-                            alert('Programa asignado exitosamente')
+                    <SimpleRegistroForm
+                        onSubmit={() => {
                             setMode('choice')
+                            window.location.reload()
                         }}
                         onCancel={() => setMode('choice')}
                     />
