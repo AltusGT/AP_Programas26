@@ -1,0 +1,65 @@
+# INSTRUCCIONES PARA LLENAR LA BASE DE DATOS
+# Archivo: Plantilla_Datos_Programas.txt
+
+===========================================
+HOJA 1: Programas_y_OCPs
+===========================================
+
+ENCABEZADOS (Primera fila - NO MODIFICAR):
+programa_nombre	ocp_numero	ocp_criterio
+
+EJEMPLO DE DATOS (Fila 2 en adelante):
+Sentado	1	Sentado con luring
+Sentado	2	Sentado sin luring (señal de voz)
+Sentado	3	Sentado con el guía alejándose 5m
+Comunicación Funcional	1	Solicitar objetos mediante señas
+Comunicación Funcional	2	Solicitar objetos mediante palabras
+Habilidades Sociales	1	Saludar apropiadamente a compañeros
+Habilidades Sociales	2	Mantener contacto visual durante conversación
+
+REGLAS:
+✅ Cada fila = 1 OCP de un programa
+✅ Un programa puede tener múltiples filas (una por cada OCP)
+✅ ocp_numero debe ser 1, 2, 3, 4, 5, 6, 7, 8, o 9
+✅ NO dejar celdas vacías
+✅ NO usar comillas dobles " dentro del texto
+✅ NO usar saltos de línea dentro de las celdas
+
+===========================================
+HOJA 2: Estudiantes
+===========================================
+
+ENCABEZADOS (Primera fila - NO MODIFICAR):
+nombre_estudiante
+
+EJEMPLO DE DATOS (Fila 2 en adelante):
+Juan Pérez García
+María González López
+Carlos Alberto Ramírez
+Ana Sofía Martínez
+
+REGLAS:
+✅ Cada fila = 1 estudiante
+✅ NO duplicar nombres
+✅ NO dejar celdas vacías
+✅ Usar nombres completos
+
+===========================================
+PROCESO DE DESCARGA
+===========================================
+
+1. En Google Sheets, ir a: Archivo → Descargar → Valores separados por comas (.csv)
+2. Descargar CADA HOJA por separado:
+   - Programas_y_OCPs.csv
+   - Estudiantes.csv
+3. Enviar ambos archivos CSV para subirlos a Supabase
+
+===========================================
+VALIDACIÓN ANTES DE DESCARGAR
+===========================================
+
+☑️ Verificar que no haya celdas vacías
+☑️ Verificar que los números de OCP sean 1-9
+☑️ Verificar que no haya nombres de estudiantes duplicados
+☑️ Verificar que cada programa tenga al menos 1 OCP
+☑️ Verificar que no haya espacios extra al inicio/final de textos

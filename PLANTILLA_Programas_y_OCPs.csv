@@ -1,0 +1,19 @@
+programa_nombre,ocp_numero,ocp_criterio
+Sentado,1,Sentado con luring
+Sentado,2,Sentado sin luring (señal de voz)
+Sentado,3,Sentado con el guía alejándose 5m
+Sentado,4,Sentado con el guía alejándose 10m
+Sentado,5,Sentado con el guía alejándose 10m y tocando muros y objetos
+Sentado,6,Sentado con el guía alejándose 10m regresar ponerle la correa y alejarse 10m
+Sentado,7,Sentado con el guía alejándose fuera de la vista del perro por 10s
+Sentado,8,Sentado con el guía alejándose de la vista del perro por 1 minuto
+Sentado,9,Sentado + otros perros y personas corriendo moviéndose y gritando
+Comunicación Funcional,1,Solicitar objetos mediante señas básicas
+Comunicación Funcional,2,Solicitar objetos mediante palabras simples
+Comunicación Funcional,3,Formar frases de 2 palabras
+Comunicación Funcional,4,Formar frases de 3-4 palabras
+Comunicación Funcional,5,Responder preguntas simples
+Habilidades Sociales,1,Saludar apropiadamente a compañeros
+Habilidades Sociales,2,Mantener contacto visual durante conversación
+Habilidades Sociales,3,Esperar turno en actividades grupales
+Habilidades Sociales,4,Compartir materiales con otros niños

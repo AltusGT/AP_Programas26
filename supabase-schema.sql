@@ -399,7 +399,7 @@ CREATE OR REPLACE VIEW vista_metricas_dashboard AS
 SELECT 
   COUNT(*) FILTER (WHERE estado = 'Abierto') as programas_abiertos,
   COUNT(*) FILTER (WHERE estado = 'Logrado') as programas_logrados,
-  COUNT(DISTINCT estudiante) as total_estudiantes,
+  COUNT(DISTINCT estudiante) FILTER (WHERE estado = 'Abierto') as total_estudiantes,
   COUNT(DISTINCT programa) as total_programas,
   ROUND(AVG(pre_test) FILTER (WHERE pre_test IS NOT NULL), 2) as promedio_pre_test,
   ROUND(AVG(post_test) FILTER (WHERE post_test IS NOT NULL), 2) as promedio_post_test
