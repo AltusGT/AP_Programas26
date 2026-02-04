@@ -21,6 +21,7 @@ export default function EstudiantesPage() {
     const [selectedProgram, setSelectedProgram] = useState<any>(null)
     const [selectedOcp, setSelectedOcp] = useState<any>(null)
     const [loadingAssignments, setLoadingAssignments] = useState(false)
+    const [selectedOcpsToClose, setSelectedOcpsToClose] = useState<Set<string>>(new Set())
 
     useEffect(() => {
         fetchEstudiantes()
@@ -56,6 +57,7 @@ export default function EstudiantesPage() {
     async function openManagePlan(estudiante: any) {
         setManagingStudent(estudiante)
         setLoadingAssignments(true)
+        setSelectedOcpsToClose(new Set()) // Reset selection when opening modal
         fetchPrograms()
 
         // Fetch active assignments
@@ -68,6 +70,49 @@ export default function EstudiantesPage() {
 
         setActiveAssignments(data || [])
         setLoadingAssignments(false)
+    }
+
+    function toggleOcpSelection(ocpId: string) {
+        setSelectedOcpsToClose(prev => {
+            const newSet = new Set(prev)
+            if (newSet.has(ocpId)) {
+                newSet.delete(ocpId)
+            } else {
+                newSet.add(ocpId)
+            }
+            return newSet
+        })
+    }
+
+    async function handleCloseSelectedOcps() {
+        if (selectedOcpsToClose.size === 0) {
+            alert('Por favor selecciona al menos un objetivo para cerrar.')
+            return
+        }
+
+        if (!confirm(`¿Estás segura de marcar ${selectedOcpsToClose.size} objetivo(s) como LOGRADO(S)?`)) return
+
+        try {
+            const guatemalaDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' })
+            const { error } = await (supabase.from('registros_programas') as any)
+                .update({ estado: 'Logrado', fecha_final: guatemalaDate })
+                .in('id', Array.from(selectedOcpsToClose))
+
+            if (error) throw error
+
+            // Refresh
+            const { data } = await supabase
+                .from('registros_programas')
+                .select('*')
+                .eq('estudiante', managingStudent.nombre)
+                .eq('estado', 'Abierto')
+                .order('fecha_inicio', { ascending: false })
+            setActiveAssignments(data || [])
+            setSelectedOcpsToClose(new Set()) // Reset selection
+            alert('¡Objetivos cerrados exitosamente!')
+        } catch (err: any) {
+            alert('Error al cerrar objetivos: ' + err.message)
+        }
     }
 
     async function handleAddAssignment() {
@@ -282,12 +327,22 @@ export default function EstudiantesPage() {
 
                         <div className="flex-1 overflow-y-auto p-8">
                             <div className="flex flex-col lg:flex-row gap-10">
-                                {/* Left: Active List */}
                                 <div className="flex-1 space-y-6">
-                                    <h3 className="font-black text-slate-900 uppercase tracking-widest text-sm flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                        Programas Activos ({activeAssignments.length})
-                                    </h3>
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="font-black text-slate-900 uppercase tracking-widest text-sm flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                            Programas Activos ({activeAssignments.length})
+                                        </h3>
+                                        {selectedOcpsToClose.size > 0 && (
+                                            <button
+                                                onClick={handleCloseSelectedOcps}
+                                                className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all flex items-center gap-2 shadow-lg shadow-emerald-200"
+                                            >
+                                                <Check size={16} />
+                                                Cerrar {selectedOcpsToClose.size} Seleccionado{selectedOcpsToClose.size > 1 ? 's' : ''}
+                                            </button>
+                                        )}
+                                    </div>
 
                                     {loadingAssignments ? (
                                         <div className="space-y-4">
@@ -310,48 +365,17 @@ export default function EstudiantesPage() {
                                                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{progAssignments.length} OCPs Activos</span>
                                                                 </div>
                                                             </div>
-                                                            <button
-                                                                onClick={async (e) => {
-                                                                    e.stopPropagation()
-                                                                    if (!confirm(`¿Estás segura de CERRAR EL PROGRAMA COMPLETO "${progName}"? \n\nEsto marcará todos sus objetivos como LOGRADOS y el programa desaparecerá de la lista.`)) return
-
-                                                                    // Validate IDs
-                                                                    const ids = progAssignments.map(a => a.id).filter(id => id)
-                                                                    if (ids.length !== progAssignments.length) {
-                                                                        alert('Error: Algunos datos están desactualizados. Por favor recarga la página (F5) para corregirlo.')
-                                                                        return
-                                                                    }
-
-                                                                    try {
-                                                                        const guatemalaDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' })
-                                                                        const { error } = await (supabase.from('registros_programas') as any)
-                                                                            .update({ estado: 'Logrado', fecha_final: guatemalaDate })
-                                                                            .in('id', ids)
-
-                                                                        if (error) throw error
-
-                                                                        // Refresh
-                                                                        const { data } = await supabase
-                                                                            .from('registros_programas')
-                                                                            .select('*')
-                                                                            .eq('estudiante', managingStudent.nombre)
-                                                                            .eq('estado', 'Abierto')
-                                                                            .order('fecha_inicio', { ascending: false })
-                                                                        setActiveAssignments(data || [])
-                                                                    } catch (err: any) {
-                                                                        alert('Error al cerrar programa: ' + err.message)
-                                                                    }
-                                                                }}
-                                                                className="px-4 py-2 bg-white border-2 border-slate-200 text-slate-500 rounded-xl text-xs font-bold hover:border-emerald-200 hover:text-emerald-600 hover:bg-emerald-50 transition-all flex items-center gap-2"
-                                                            >
-                                                                <Check size={16} />
-                                                                Marcar Completo
-                                                            </button>
                                                         </div>
 
                                                         <div className="space-y-3 pl-4 border-l-2 border-slate-200 ml-4">
                                                             {progAssignments.map((assign) => (
                                                                 <div key={assign.id} className="p-4 bg-white rounded-2xl border border-slate-100 flex items-start gap-3 shadow-sm">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={selectedOcpsToClose.has(assign.id)}
+                                                                        onChange={() => toggleOcpSelection(assign.id)}
+                                                                        className="mt-1 w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0 cursor-pointer"
+                                                                    />
                                                                     <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
                                                                         OCP {assign.ocp}
                                                                     </div>
@@ -363,37 +387,6 @@ export default function EstudiantesPage() {
                                                                             </span>
                                                                         </div>
                                                                     </div>
-                                                                    <button
-                                                                        onClick={async (e) => {
-                                                                            e.stopPropagation()
-                                                                            if (!assign.id) {
-                                                                                alert('Error: Datos desactualizados. Recarga la página.')
-                                                                                return
-                                                                            }
-                                                                            if (!confirm('¿Marcar este objetivo como LOGRADO?')) return
-                                                                            try {
-                                                                                const guatemalaDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' })
-                                                                                const { error } = await (supabase.from('registros_programas') as any)
-                                                                                    .update({ estado: 'Logrado', fecha_final: guatemalaDate })
-                                                                                    .eq('id', assign.id)
-                                                                                if (error) throw error
-
-                                                                                const { data } = await supabase
-                                                                                    .from('registros_programas')
-                                                                                    .select('*')
-                                                                                    .eq('estudiante', managingStudent.nombre)
-                                                                                    .eq('estado', 'Abierto')
-                                                                                    .order('fecha_inicio', { ascending: false })
-                                                                                setActiveAssignments(data || [])
-                                                                            } catch (err: any) {
-                                                                                alert('Error: ' + err.message)
-                                                                            }
-                                                                        }}
-                                                                        className="w-8 h-8 rounded-lg text-slate-300 hover:bg-emerald-100 hover:text-emerald-500 flex items-center justify-center transition-colors"
-                                                                        title="Marcar como Logrado"
-                                                                    >
-                                                                        <Check size={16} />
-                                                                    </button>
                                                                 </div>
                                                             ))}
                                                         </div>
