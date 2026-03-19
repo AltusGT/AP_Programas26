@@ -213,7 +213,7 @@ export default function RegistroForm({
                 {/* OCP */}
                 <div>
                     <label htmlFor="ocp" className="block text-sm font-medium text-slate-700 mb-1">
-                        OCP (Objetivo a Corto Plazo) <span className="text-red-500">*</span>
+                        Criterio (Objetivo a Corto Plazo) <span className="text-red-500">*</span>
                     </label>
                     <input
                         type="number"

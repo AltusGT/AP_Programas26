@@ -362,7 +362,7 @@ export default function EstudiantesPage() {
                                                                 </div>
                                                                 <div>
                                                                     <h4 className="font-bold text-slate-900 text-lg">{progName}</h4>
-                                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{progAssignments.length} OCPs Activos</span>
+                                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{progAssignments.length} Criterios Activos</span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -377,7 +377,7 @@ export default function EstudiantesPage() {
                                                                         className="mt-1 w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0 cursor-pointer"
                                                                     />
                                                                     <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
-                                                                        OCP {assign.ocp}
+                                                                        {assign.ocp}
                                                                     </div>
                                                                     <div className="flex-1 min-w-0">
                                                                         <p className="text-slate-600 text-sm font-medium leading-snug">{assign.criterio}</p>
@@ -429,7 +429,7 @@ export default function EstudiantesPage() {
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Objetivo (OCP)</label>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Criterio</label>
                                             <select
                                                 className="input w-full h-12 text-sm font-bold bg-white border-transparent focus:border-blue-500 rounded-xl"
                                                 disabled={!selectedProgram}
@@ -439,7 +439,7 @@ export default function EstudiantesPage() {
                                                 }}
                                                 value={selectedOcp?.id || ''}
                                             >
-                                                <option value="">-- Elige un OCP --</option>
+                                                <option value="">-- Elige un criterio --</option>
                                                 {availableOcps.map(o => (
                                                     <option key={o.id} value={o.id}>{o.numero_ocp} - {o.criterio.substring(0, 30)}...</option>
                                                 ))}

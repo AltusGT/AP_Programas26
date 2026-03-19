@@ -138,7 +138,7 @@ export default function SimpleRegistroForm({ onSubmit, onCancel }: SimpleRegistr
             {/* OCP */}
             <div>
                 <label className="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">
-                    Objetivo (OCP) <span className="text-red-500">*</span>
+                    Criterio <span className="text-red-500">*</span>
                 </label>
                 <select
                     value={selectedOcp?.id || ''}
@@ -150,10 +150,10 @@ export default function SimpleRegistroForm({ onSubmit, onCancel }: SimpleRegistr
                     disabled={!selectedPrograma}
                     required
                 >
-                    <option value="">-- Seleccionar OCP --</option>
+                    <option value="">-- Seleccionar criterio --</option>
                     {ocps.map(ocp => (
                         <option key={ocp.id} value={ocp.id}>
-                            OCP {ocp.numero_ocp} - {ocp.criterio.substring(0, 50)}...
+                            {ocp.numero_ocp} - {ocp.criterio.substring(0, 50)}...
                         </option>
                     ))}
                 </select>

@@ -81,7 +81,7 @@ export default function ProgramasCatalogPage() {
     }
 
     async function handleDeleteOcp(id: string, programId: string) {
-        if (!confirm('¿Eliminar este criterio OCP?')) return
+        if (!confirm('¿Eliminar este criterio técnico?')) return
         const { error } = await supabase.from('programas_ocp').delete().eq('id', id)
         if (!error) fetchOcps(programId)
     }
@@ -167,7 +167,7 @@ export default function ProgramasCatalogPage() {
                     </div>
                     <h2 className="text-3xl font-bold text-slate-900 mb-4">Acceso Limitado</h2>
                     <p className="text-slate-500 text-lg leading-relaxed">
-                        La gestión del catálogo de programas y criterios OCP es una función exclusiva para **Supervisoras**.
+                        La gestión del catálogo de programas y criterios técnicos es una función exclusiva para **Supervisoras**.
                     </p>
                     <div className="mt-8 p-4 bg-slate-50 rounded-2xl text-sm text-slate-400 font-medium">
                         Cambia tu rol en el menú lateral para acceder.
@@ -186,7 +186,7 @@ export default function ProgramasCatalogPage() {
                         Gestión Técnica
                     </div>
                     <h1 className="text-4xl font-bold text-slate-900 tracking-tight">Catálogo de Programas</h1>
-                    <p className="text-slate-500 mt-2 font-medium">Define la estructura y criterios OCP para cada programa.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Define la estructura y criterios técnicos para cada programa.</p>
                 </div>
                 <button
                     onClick={() => setShowAddModal(true)}
@@ -273,10 +273,10 @@ export default function ProgramasCatalogPage() {
                                                 <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600">
                                                     <Target size={24} />
                                                 </div>
-                                                <h4 className="text-xl font-bold text-slate-800">Criterios OCP</h4>
+                                                <h4 className="text-xl font-bold text-slate-800">Criterios Técnicos</h4>
                                             </div>
                                             <div className="text-xs font-bold text-slate-400 uppercase tracking-widest bg-white/50 px-4 py-2 rounded-full border border-slate-200/50">
-                                                Progreso: {ocps.length} OCPs definidos
+                                                Progreso: {ocps.length} Criterios definidos
                                             </div>
                                         </div>
 
@@ -346,7 +346,7 @@ export default function ProgramasCatalogPage() {
                                                         onChange={e => setEditingOcp(prev => prev ? { ...prev, criterio: e.target.value } : null)}
                                                     />
                                                     <div className="flex gap-2">
-                                                        <button onClick={handleSaveOcp} className="btn btn-primary h-9 px-4 text-xs flex-1 rounded-xl">Guardar OCP {editingOcp?.numero_ocp}</button>
+                                                        <button onClick={handleSaveOcp} className="btn btn-primary h-9 px-4 text-xs flex-1 rounded-xl">Guardar Criterio {editingOcp?.numero_ocp}</button>
                                                         <button onClick={() => setEditingOcp(null)} className="btn-outline h-9 px-3 rounded-xl"><X size={16} /></button>
                                                     </div>
                                                 </div>
@@ -362,7 +362,7 @@ export default function ProgramasCatalogPage() {
                                                     <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-300 group-hover:text-blue-500 group-hover:scale-110 transition-all">
                                                         <Plus size={24} />
                                                     </div>
-                                                    <span className="font-bold text-slate-400 group-hover:text-blue-600">Añadir OCP {ocps.length + 1}</span>
+                                                    <span className="font-bold text-slate-400 group-hover:text-blue-600">Añadir Criterio {ocps.length + 1}</span>
                                                 </button>
                                             )}
                                         </div>

@@ -80,7 +80,7 @@ function RegistroContent() {
                         </div>
                         <div className="flex-1">
                             <h2 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-700 mb-1">Asignar Programa</h2>
-                            <p className="text-slate-500 font-medium leading-tight">Vincular un nuevo OCP del catálogo a un niño.</p>
+                            <p className="text-slate-500 font-medium leading-tight">Vincular un nuevo criterio del catálogo a un niño.</p>
                         </div>
                     </button>
 

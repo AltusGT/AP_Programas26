@@ -261,7 +261,7 @@ export default function TerapeutaFlow() {
                                                 </div>
                                                 <div>
                                                     <h3 className="font-black text-xl text-slate-900 group-hover:text-emerald-700 uppercase tracking-tight">{progNombre}</h3>
-                                                    <span className="text-sm text-slate-400 font-bold uppercase tracking-widest">{ocpCount} Objetivos Activos</span>
+                                                    <span className="text-sm text-slate-400 font-bold uppercase tracking-widest">{ocpCount} Criterios Activos</span>
                                                 </div>
                                             </div>
                                             <ChevronRight size={28} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
@@ -291,7 +291,7 @@ export default function TerapeutaFlow() {
                                 <Target size={32} />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-black text-slate-900 tracking-tight">Seleccionar OCP</h1>
+                                <h1 className="text-3xl font-black text-slate-900 tracking-tight">Seleccionar Criterio</h1>
                                 <p className="text-slate-500 font-medium">{selectedProgramName}</p>
                             </div>
                         </div>
@@ -330,7 +330,7 @@ export default function TerapeutaFlow() {
 
                         <div className="mb-10">
                             <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Fase de Registro</h1>
-                            <p className="text-slate-500 font-medium">Selecciona la etapa técnica para este OCP</p>
+                            <p className="text-slate-500 font-medium">Selecciona la etapa técnica para este criterio</p>
                         </div>
 
                         <div className="grid grid-cols-1 gap-5">
@@ -361,7 +361,7 @@ export default function TerapeutaFlow() {
                                 </div>
                                 <div className="flex-1">
                                     <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-1">Fase Final</h3>
-                                    <p className="text-slate-500 font-bold">Cierre de OCP (Post-test)</p>
+                                    <p className="text-slate-500 font-bold">Cierre de criterio (Post-test)</p>
                                 </div>
                             </button>
 
