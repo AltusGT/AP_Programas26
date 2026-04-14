@@ -327,7 +327,7 @@ export default function ProgramasCatalogPage() {
 
                                             {/* Add New OCP Card */}
                                             {/* Add New OCP Card */}
-                                            {editingOcp && editingOcp.programa_id === prog.id && !editingOcp.id ? (
+                                            {editingOcp && editingOcp.programa_id === prog.nombre && !editingOcp.id ? (
                                                 <div className="bg-white rounded-[28px] p-6 shadow-xl border-2 border-blue-500 flex flex-col min-h-[200px] animate-scale-in">
                                                     <span className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black bg-blue-600 text-white mb-3">
                                                         {editingOcp?.numero_ocp}
@@ -347,8 +347,8 @@ export default function ProgramasCatalogPage() {
                                             ) : (
                                                 <button
                                                     onClick={() => setEditingOcp({
-                                                        programa_id: prog.id,
-                                                        numero_ocp: (ocps.length > 0 ? Math.max(...ocps.map(o => o.numero_ocp)) : 0) + 1,
+                                                        programa_id: prog.nombre,
+                                                        numero_ocp: ((prog.criterios || []).length) + 1,
                                                         criterio: ''
                                                     })}
                                                     className="group relative bg-slate-50 border-2 border-dashed border-slate-200 rounded-[28px] p-6 flex flex-col items-center justify-center gap-4 hover:border-blue-400 hover:bg-blue-50/30 transition-all min-h-[200px]"
