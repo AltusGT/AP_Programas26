@@ -3,8 +3,6 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-
-import Image from 'next/image'
 import { LayoutDashboard, PlusCircle, Users, BookOpen, UserCircle, Shield, User as UserIcon } from 'lucide-react'
 import { useRole } from '@/lib/contexts/RoleContext'
 
@@ -42,8 +40,8 @@ export default function Sidebar({ className }: { className?: string }) {
     return (
         <aside className={`w-64 bg-white border-r border-slate-200 flex flex-col h-screen sticky top-0 hidden lg:flex ${className}`}>
             <div className="p-8 flex-1 flex flex-col">
-                <div className="mb-10 flex justify-start">
-                    <Image src="/logo.png" alt="Altus" width={150} height={50} className="logo-main object-contain" />
+                <div className="mb-10 flex justify-start px-4">
+                    <img src="/AP_Programas26/logo.png" alt="Altus" className="w-32 h-auto object-contain" />
                 </div>
 
                 <nav className="space-y-2 flex-1">

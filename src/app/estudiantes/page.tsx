@@ -1,8 +1,16 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Plus, Search, User, Trash2, Edit, ClipboardList, X, Check, BookOpen } from 'lucide-react'
+import { Plus, Search, User, Trash2, Edit, ClipboardList, X, Check, BookOpen, UserCircle } from 'lucide-react'
 import { fetchBaseData, saveStudent, fetchCatalog, saveAssignment, fetchDashboardData, saveSession } from '@/lib/services/sheets'
+
+function getInitials(name: string) {
+    if (!name) return '?'
+    const parts = name.split(' ').filter(p => p.length > 0)
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase()
+    return (parts[0].charAt(0) + (parts[1]?.charAt(0) || '') + (parts[2]?.charAt(0) || ''))
+        .toUpperCase()
+}
 
 export default function EstudiantesPage() {
     const [estudiantes, setEstudiantes] = useState<any[]>([])
@@ -290,8 +298,8 @@ export default function EstudiantesPage() {
                         <div key={est.id} className="group bg-white rounded-[32px] p-6 border-2 border-slate-100 hover:border-purple-200 hover:shadow-xl hover:shadow-purple-500/5 transition-all duration-300">
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex items-center gap-5">
-                                    <div className="w-16 h-16 bg-slate-50 text-slate-400 group-hover:bg-purple-600 group-hover:text-white rounded-[20px] flex items-center justify-center transition-all duration-500 shadow-sm">
-                                        <User size={28} />
+                                    <div className="w-16 h-16 bg-slate-50 text-slate-600 group-hover:bg-purple-600 group-hover:text-white rounded-[20px] flex items-center justify-center transition-all duration-500 shadow-sm font-black text-xl">
+                                        {getInitials(est.nombre)}
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-slate-900 mb-1">{est.nombre}</h3>
