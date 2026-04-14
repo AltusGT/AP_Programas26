@@ -177,7 +177,7 @@ export default function Dashboard() {
 
                 <MetricsCard
                     title="Promedio Pre-Test"
-                    value={`${metrics?.promedio_pre_test?.toFixed(1) || '0.0'}%`}
+                    value={`${Number(metrics?.promedio_pre_test || 0).toFixed(1)}%`}
                     icon={<BarChart3 size={24} />}
                     color="amber"
                     numeric
@@ -185,7 +185,7 @@ export default function Dashboard() {
 
                 <MetricsCard
                     title="Promedio Post-Test"
-                    value={`${metrics?.promedio_post_test?.toFixed(1) || '0.0'}%`}
+                    value={`${Number(metrics?.promedio_post_test || 0).toFixed(1)}%`}
                     icon={<TrendingUp size={24} />}
                     color="emerald"
                     numeric
