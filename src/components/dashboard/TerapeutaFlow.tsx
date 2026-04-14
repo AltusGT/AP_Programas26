@@ -57,22 +57,22 @@ export default function TerapeutaFlow({ onAssignNew }: { onAssignNew?: () => voi
             const records = data.records || []
             
             // Map to the expected structure in Step 3
-            const mapped = records.map((r: any, i: number) => ({
-                id: i.toString(),
-                id_sesion: r[1],
-                fecha_inicio: r[2],
-                estudiante: r[3],
-                tipo: r[4],
-                programa: r[6],
-                ocp: r[7],
-                criterio: r[7], // En GAS, el campo 7 suele tener el criterio o numero_ocp
-                estado: r[4],
-                pre_test: r[8],
-                post_test: r[9],
-                resultado_g1: r[10],
-                resultado_g2: r[11],
-                resultado_g3: r[12]
-            })).filter((r: any) => r.estado === 'Abierto')
+            const mapped = records
+                .filter((r: any) => Array.isArray(r) && r.length >= 7)
+                .map((r: any, i: number) => ({
+                    id: i.toString(),
+                    id_sesion: r[1],
+                    fecha_inicio: r[2],
+                    estudiante: r[3],
+                    tipo: r[5],
+                    programa: r[6],
+                    ocp: r[7],      // Número correlativo (Index 7)
+                    criterio: r[8], // Texto descriptivo (Index 8)
+                    estado: r[4],
+                    pre_test: r[9],
+                    post_test: r[9],
+                    valor: r[9]
+                })).filter((r: any) => r.estado === 'Abierto')
 
             setProgramasActivos(mapped)
         } catch (error) {
@@ -115,15 +115,15 @@ export default function TerapeutaFlow({ onAssignNew }: { onAssignNew?: () => voi
             const valor = parseFloat(resultado)
             
             // En el sistema de Sheets (Code.gs), 'saveSession' espera un array de registros
-            // Aquí enviamos una actualización que el script procesará para añadir o actualizar filas
             const sessionRecord = {
                 idSesion: selectedPrograma.id_sesion || `UPDATE-${Date.now()}`,
                 fechaSesion: fecha,
                 estudiante: selectedEstudiante,
-                tipoRegistro: registroTipo, // 'Inicial' | 'Final' | 'Generalización'
+                tipoRegistro: registroTipo,
                 materia: selectedPrograma.programa,
-                ocp: selectedPrograma.ocp,
-                uac: registroTipo === 'Final' ? valor : (registroTipo === 'Inicial' ? valor : 0),
+                ocp_num: selectedPrograma.ocp,      // Enviamos el número correlativo
+                ocp: selectedPrograma.criterio,     // Enviamos el texto descriptivo
+                uac: valor,                         // El valor del porcentaje
                 uai: 0,
                 nivelAyuda: 'N/A',
                 reforzador: 'N/A',

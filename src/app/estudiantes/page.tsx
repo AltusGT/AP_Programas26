@@ -81,22 +81,24 @@ export default function EstudiantesPage() {
             // 1. Identificar registros cerrados
             const closedOcps = new Set()
             records.forEach((r: any) => {
+                if (!Array.isArray(r)) return
                 const status = r[4]
-                if (status && (status === 'Logrado' || status === 'Finalizado' || status === 'Final')) {
-                    const key = `${r[6]}-${r[7]}`
+                const type = r[5]
+                if ((status && (status === 'Logrado' || status === 'Finalizado')) || type === 'Final') {
+                    const key = `${r[6]}-${r[7]}` // Programa-OCPNum
                     closedOcps.add(key)
                 }
             })
 
             // 2. Mapear 'Abiertos' que NO estén en la lista de cerrados
             const mapped = records
-                .filter((r: any) => r[4] === 'Abierto' && !closedOcps.has(`${r[6]}-${r[7]}`))
+                .filter((r: any) => Array.isArray(r) && r[4] === 'Abierto' && !closedOcps.has(`${r[6]}-${r[7]}`))
                 .map((r: any, i: number) => ({
                     id: `assign-${i}`,
                     estudiante: r[3],
                     programa: r[6],
                     ocp: r[7],
-                    criterio: r[7],
+                    criterio: r[8], // Ahora el criterio es la columna 8
                     estado: r[4],
                     fecha_inicio: r[2]
                 }))

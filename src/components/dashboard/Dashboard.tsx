@@ -49,19 +49,22 @@ export default function Dashboard() {
             })
 
             // Mapear records de array a objetos para ProgramsTable
-            const mappedPrograms = records.map((r: any, i: number) => ({
-                id: i.toString(),
-                id_sesion: r[1],
-                fecha_inicio: r[2],
-                estudiante: r[3],
-                tipo_registro: r[4],
-                programa: r[6],
-                materia_programa: r[6],
-                ocp: r[7],
-                estado: r[4],
-                pre_test: r[8],
-                post_test: r[9]
-            }))
+            const mappedPrograms = records
+                .filter((r: any) => Array.isArray(r) && r.length >= 7)
+                .map((r: any, i: number) => ({
+                    id: i.toString(),
+                    id_sesion: r[1],
+                    fecha_inicio: r[2],
+                    estudiante: r[3],
+                    tipo_registro: r[5], // Tipo (Index 5)
+                    programa: r[6],      // Programa (Index 6)
+                    materia_programa: r[6],
+                    ocp: r[7],           // OCP Num (Index 7)
+                    criterio: r[8],      // Criterio Text (Index 8)
+                    estado: r[4],        // Estado (Index 4)
+                    pre_test: (r[5] === 'Asignación' || r[5] === 'Inicial') ? r[9] : null,
+                    post_test: r[5] === 'Final' ? r[9] : null
+                }))
             
             setProgramasActivos(mappedPrograms)
         } catch (err: any) {
