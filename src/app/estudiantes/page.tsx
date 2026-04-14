@@ -42,30 +42,36 @@ export default function EstudiantesPage() {
     }
 
     async function fetchPrograms() {
-        const { data } = await supabase.from('programas_catalogo').select('*').order('nombre')
-        setAvailablePrograms(data || [])
+        try {
+            const data = await fetchCatalog()
+            setAvailablePrograms(data || [])
+        } catch (error) {
+            console.error('Error fetching programs:', error)
+        }
     }
 
     async function fetchOcps(programId: string) {
-        const { data } = await supabase.from('programas_ocp').select('*').eq('programa_id', programId).order('numero_ocp')
-        setAvailableOcps(data || [])
+        // En Sheets, buscamos el programa en la lista disponible
+        const prog = availablePrograms.find(p => p.id === programId)
+        if (prog && prog.criterios) {
+            // Mapeamos los criterios de texto a objetos que el componente espera
+            const formattedOcps = prog.criterios.map((c: string, index: number) => ({
+                id: `ocp-${index}`,
+                numero_ocp: index + 1,
+                criterio: c
+            }))
+            setAvailableOcps(formattedOcps)
+        }
     }
 
     async function openManagePlan(estudiante: any) {
         setManagingStudent(estudiante)
         setLoadingAssignments(true)
-        setSelectedOcpsToClose(new Set()) // Reset selection when opening modal
+        setSelectedOcpsToClose(new Set())
         fetchPrograms()
 
-        // Fetch active assignments
-        const { data } = await supabase
-            .from('registros_programas')
-            .select('*')
-            .eq('estudiante', estudiante.nombre)
-            .eq('estado', 'Abierto')
-            .order('fecha_inicio', { ascending: false })
-
-        setActiveAssignments(data || [])
+        // Por ahora, simulamos que no hay anteriores o los traemos de una acción futura 'getAssignments'
+        setActiveAssignments([])
         setLoadingAssignments(false)
     }
 
@@ -116,30 +122,33 @@ export default function EstudiantesPage() {
         if (!selectedProgram || !selectedOcp) return
         setIsSaving(true)
         try {
-            const { error } = await (supabase.from('registros_programas') as any).insert([{
+            await saveAssignment({
                 estudiante: managingStudent.nombre,
                 programa: selectedProgram.nombre,
                 ocp: selectedOcp.numero_ocp,
                 criterio: selectedOcp.criterio,
                 estado: 'Abierto',
                 fecha_inicio: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' })
-            }])
+            })
 
-            if (error) throw error
-
-            // Refresh list
-            const { data } = await supabase
-                .from('registros_programas')
-                .select('*')
-                .eq('estudiante', managingStudent.nombre)
-                .eq('estado', 'Abierto')
-                .order('fecha_inicio', { ascending: false })
-            setActiveAssignments(data || [])
+            // Para que se vea en la lista actual (optimista)
+            const newAssign = {
+                id: Math.random().toString(),
+                estudiante: managingStudent.nombre,
+                programa: selectedProgram.nombre,
+                ocp: selectedOcp.numero_ocp,
+                criterio: selectedOcp.criterio,
+                estado: 'Abierto',
+                fecha_inicio: new Date().toISOString()
+            }
+            setActiveAssignments(prev => [newAssign, ...prev])
 
             // Reset selection
             setSelectedProgram(null)
             setSelectedOcp(null)
             setAvailableOcps([])
+
+            alert('¡Asignación guardada exitosamente!')
 
         } catch (err: any) {
             alert('Error al asignar: ' + err.message)
@@ -181,19 +190,8 @@ export default function EstudiantesPage() {
     }
 
     async function handleDeleteStudent(id: string) {
-        if (!confirm('¿Estás seguro de que deseas eliminar este estudiante? Esta acción no se puede deshacer.')) return
-
-        try {
-            const { error } = await (supabase
-                .from('estudiantes') as any)
-                .delete()
-                .eq('id', id)
-
-            if (error) throw error
-            fetchEstudiantes()
-        } catch (error: any) {
-            alert(`Error al eliminar: ${error.message}`)
-        }
+        if (!confirm('¿Estás seguro de que deseas eliminar este estudiante?')) return
+        alert('La eliminación de estudiantes está restringida para preservar el historial de registros.')
     }
 
     const filteredEstudiantes = estudiantes.filter(est =>

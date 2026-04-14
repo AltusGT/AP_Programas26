@@ -98,3 +98,21 @@ export async function saveStudent(nombre: string) {
         throw error;
     }
 }
+
+export async function saveAssignment(data: any) {
+    try {
+        const params = new URLSearchParams();
+        params.append('action', 'saveAssignment');
+        params.append('data', JSON.stringify(data));
+
+        await fetch(GAS_URL!, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: params
+        });
+        return { success: true };
+    } catch (error) {
+        console.error('saveAssignment error:', error);
+        throw error;
+    }
+}
