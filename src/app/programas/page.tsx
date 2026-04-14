@@ -16,7 +16,6 @@ export default function ProgramasCatalogPage() {
     const [editingProgram, setEditingProgram] = useState<any>(null)
     const [isSaving, setIsSaving] = useState(false)
     const [expandedProgram, setExpandedProgram] = useState<string | null>(null)
-    const [programOcps, setProgramOcps] = useState<Record<string, ProgramaOCP[]>>({})
     const [editingOcp, setEditingOcp] = useState<{ id?: string, programa_id: string, numero_ocp: number, criterio: string } | null>(null)
 
     useEffect(() => {
@@ -35,10 +34,6 @@ export default function ProgramasCatalogPage() {
         }
     }
 
-    async function fetchOcps(programaId: string) {
-        // En Sheets, los criterios ya vienen dentro del objeto programa
-        // No necesitamos una llamada extra.
-    }
 
     const toggleExpand = (programaNombre: string) => {
         if (expandedProgram === programaNombre) {
@@ -269,7 +264,7 @@ export default function ProgramasCatalogPage() {
                                                 <h4 className="text-xl font-bold text-slate-800">Criterios Técnicos</h4>
                                             </div>
                                             <div className="text-xs font-bold text-slate-400 uppercase tracking-widest bg-white/50 px-4 py-2 rounded-full border border-slate-200/50">
-                                                Progreso: {ocps.length} Criterios definidos
+                                                Progreso: {(prog.criterios || []).length} Criterios definidos
                                             </div>
                                         </div>
 
@@ -381,14 +376,14 @@ export default function ProgramasCatalogPage() {
             {/* Add Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
-                    <div className="bg-white w-full max-w-lg rounded-[48px] p-10 md:p-12 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.3)] animate-scale-in border border-white/50">
-                        <div className="flex items-center gap-4 mb-10">
-                            <div className="w-16 h-16 bg-blue-600 text-white rounded-[24px] flex items-center justify-center shadow-xl shadow-blue-200">
-                                <Plus size={32} />
+                    <div className="bg-white w-full max-w-lg rounded-[32px] md:rounded-[48px] p-6 md:p-12 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.3)] animate-scale-in border border-white/50 overflow-y-auto max-h-[90vh]">
+                        <div className="flex items-center gap-4 mb-8 md:mb-10">
+                            <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-600 text-white rounded-[18px] md:rounded-[24px] flex items-center justify-center shadow-xl shadow-blue-200">
+                                <Plus size={28} />
                             </div>
                             <div>
-                                <h2 className="text-3xl font-black text-slate-900 tracking-tight">Nuevo Programa</h2>
-                                <p className="text-slate-400 font-bold text-sm uppercase tracking-widest mt-1">Definición técnica</p>
+                                <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Nuevo Programa</h2>
+                                <p className="text-slate-400 font-bold text-[10px] md:text-sm uppercase tracking-widest mt-1">Definición técnica</p>
                             </div>
                         </div>
                         <form onSubmit={handleAddProgram} className="space-y-8">
@@ -439,7 +434,7 @@ export default function ProgramasCatalogPage() {
                                             <input
                                                 type="text"
                                                 required
-                                                className="input h-12 rounded-xl bg-slate-50 border-transparent focus:bg-white focus:border-blue-500 transition-all text-sm font-semibold flex-1"
+                                                className="input h-10 md:h-12 rounded-xl bg-slate-50 border-transparent focus:bg-white focus:border-blue-500 transition-all text-xs md:text-sm font-semibold flex-1"
                                                 value={criterio}
                                                 onChange={e => updateCriterioValue(index, e.target.value)}
                                                 placeholder={`Criterio ${index + 1}`}
@@ -448,12 +443,14 @@ export default function ProgramasCatalogPage() {
                                                 <button
                                                     type="button"
                                                     onClick={() => removeCriterioInput(index)}
-                                                    className="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                                    className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                                                 >
-                                                    <X size={20} />
+                                                    <X size={18} />
                                                 </button>
                                             )}
                                         </div>
+                                    ))}
+
                                     ))}
                                     <button
                                         type="button"
