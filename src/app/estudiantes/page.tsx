@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Plus, Search, User, Trash2, Edit, ClipboardList, X, Check, BookOpen } from 'lucide-react'
-import { fetchBaseData, saveStudent } from '@/lib/services/sheets'
+import { fetchBaseData, saveStudent, fetchCatalog, saveAssignment } from '@/lib/services/sheets'
 
 export default function EstudiantesPage() {
     const [estudiantes, setEstudiantes] = useState<any[]>([])
