@@ -8,7 +8,7 @@ import ProgramsTable from './ProgramsTable'
 import { Activity, CheckCircle2, Users, BarChart3, TrendingUp, BookCopy, Calendar } from 'lucide-react'
 import { useRole } from '@/lib/contexts/RoleContext'
 import TerapeutaFlow from './TerapeutaFlow'
-
+import { ErrorBoundary } from '../ErrorBoundary'
 export default function Dashboard() {
     const { role } = useRole()
     const [metrics, setMetrics] = useState<MetricasDashboard | null>(null)
@@ -212,7 +212,9 @@ export default function Dashboard() {
                 </div>
 
                 <div className="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
-                    <ProgramsTable programs={programasActivos} />
+                    <ErrorBoundary fallback={(err) => <div className="p-4 bg-red-100 text-red-700">Error en ProgramsTable: {err.message}</div>}>
+                        <ProgramsTable programs={programasActivos} />
+                    </ErrorBoundary>
                 </div>
             </section>
         </div>
