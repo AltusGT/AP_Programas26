@@ -18,16 +18,17 @@ export async function fetchCatalog() {
 
 export async function saveCatalogProgram(nombre: string, criterios: string[]) {
     try {
-        const response = await fetch(GAS_URL!, {
+        const params = new URLSearchParams();
+        params.append('action', 'saveCatalog');
+        params.append('nombre_programa', nombre);
+        params.append('criterios', JSON.stringify(criterios));
+
+        await fetch(GAS_URL!, {
             method: 'POST',
-            body: JSON.stringify({
-                action: 'saveCatalog',
-                nombre_programa: nombre,
-                criterios: criterios
-            })
+            mode: 'no-cors', // Seguimos usando no-cors para máxima compatibilidad con redirecciones de Google
+            body: params
         });
-        if (!response.ok) throw new Error('Error al guardar programa en catálogo');
-        return await response.json();
+        return { success: true };
     } catch (error) {
         console.error('saveCatalogProgram error:', error);
         throw error;
@@ -47,15 +48,16 @@ export async function fetchBaseData() {
 
 export async function saveSession(records: any[]) {
     try {
-        const response = await fetch(GAS_URL!, {
+        const params = new URLSearchParams();
+        params.append('action', 'saveSession');
+        params.append('records', JSON.stringify(records));
+
+        await fetch(GAS_URL!, {
             method: 'POST',
-            body: JSON.stringify({
-                action: 'saveSession',
-                records: records
-            })
+            mode: 'no-cors',
+            body: params
         });
-        if (!response.ok) throw new Error('Error al guardar sesión');
-        return await response.json();
+        return { success: true };
     } catch (error) {
         console.error('saveSession error:', error);
         throw error;
@@ -81,15 +83,16 @@ export async function fetchDashboardData(student?: string, start?: string, end?:
 
 export async function saveStudent(nombre: string) {
     try {
-        const response = await fetch(GAS_URL!, {
+        const params = new URLSearchParams();
+        params.append('action', 'saveStudent');
+        params.append('nombre', nombre);
+
+        await fetch(GAS_URL!, {
             method: 'POST',
-            body: JSON.stringify({
-                action: 'saveStudent',
-                nombre: nombre
-            })
+            mode: 'no-cors',
+            body: params
         });
-        if (!response.ok) throw new Error('Error al guardar estudiante');
-        return await response.json();
+        return { success: true };
     } catch (error) {
         console.error('saveStudent error:', error);
         throw error;
