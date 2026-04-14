@@ -44,17 +44,25 @@ export default function ProgramsTable({ programs }: ProgramsTableProps) {
         return 0
     })
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-        })
+    const formatDate = (dateString: any) => {
+        try {
+            if (!dateString) return 'Sin fecha'
+            const date = new Date(dateString)
+            if (isNaN(date.getTime())) return 'Fecha inválida'
+            
+            return date.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+            })
+        } catch (e) {
+            return 'Error fecha'
+        }
     }
 
-    const formatPercentage = (value: number | null) => {
-        if (value == null) return '-'
-        return `${value.toFixed(1)}%`
+    const formatPercentage = (value: any) => {
+        if (value == null || value === '' || isNaN(Number(value))) return '-'
+        return `${Number(value).toFixed(1)}%`
     }
 
     if (programs.length === 0) {

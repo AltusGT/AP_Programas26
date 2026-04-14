@@ -31,19 +31,22 @@ export default function Dashboard() {
 
             const data = await fetchDashboardData()
             
-            if (data.error) throw new Error(data.error)
+            if (!data || data.error) throw new Error(data?.error || 'No se recibieron datos del servidor')
 
-            // Mapeo básico de métricas desde los registros crudos de Sheets
-            // Nota: En la versión Supabase teníamos vistas, aquí calculamos o usamos lo que venga de GAS
-            const records = data.records || []
-            const uniqueStudents = [...new Set(records.map((r: any) => r[3]))].length
-            const openPrograms = records.filter((r: any) => r[4] === 'Abierto').length
+            const records = Array.isArray(data.records) ? data.records : []
+            
+            // Calculo seguro de métricas
+            const studentsSet = new Set(records.filter(r => Array.isArray(r) && r[3]).map(r => r[3].toString().trim()))
+            const uniqueStudents = studentsSet.size
+            
+            const openPrograms = records.filter((r: any) => Array.isArray(r) && r[4] === 'Abierto').length
+            const logrados = records.filter((r: any) => Array.isArray(r) && (r[4] === 'Logrado' || r[4] === 'Finalizado')).length
 
             setMetrics({
                 programas_abiertos: openPrograms,
-                programas_logrados: records.filter((r: any) => r[4] === 'Logrado').length,
+                programas_logrados: logrados,
                 total_estudiantes: uniqueStudents,
-                promedio_pre_test: 0, // Necesitaríamos lógica extra en GAS o aquí
+                promedio_pre_test: 0, 
                 promedio_post_test: 0,
                 total_programas: records.length
             })
