@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Plus, Search, User, Trash2, Edit, ClipboardList, X, Check, BookOpen } from 'lucide-react'
-import { supabase } from '@/lib/supabase/client'
+import { fetchBaseData, saveStudent } from '@/lib/services/sheets'
 
 export default function EstudiantesPage() {
     const [estudiantes, setEstudiantes] = useState<any[]>([])
@@ -30,13 +30,10 @@ export default function EstudiantesPage() {
     async function fetchEstudiantes() {
         setLoading(true)
         try {
-            const { data, error } = await (supabase
-                .from('estudiantes') as any)
-                .select('id, nombre')
-                .order('nombre')
-
-            if (error) throw error
-            setEstudiantes(data || [])
+            const data = await fetchBaseData()
+            // Map array of strings to objects [{id, nombre}]
+            const studentList = (data.students || []).map((name: string) => ({ id: name, nombre: name }))
+            setEstudiantes(studentList)
         } catch (error) {
             console.error('Error fetching estudiantes:', error)
         } finally {
@@ -155,12 +152,7 @@ export default function EstudiantesPage() {
         e.preventDefault()
         setIsSaving(true)
         try {
-            const { error } = await (supabase
-                .from('estudiantes') as any)
-                .insert([{ nombre: newStudent.nombre }])
-
-            if (error) throw error
-
+            await saveStudent(newStudent.nombre)
             setNewStudent({ nombre: '' })
             setShowAddModal(false)
             fetchEstudiantes()
@@ -176,15 +168,9 @@ export default function EstudiantesPage() {
         if (!editingStudent) return
         setIsSaving(true)
         try {
-            const { error } = await (supabase
-                .from('estudiantes') as any)
-                .update({
-                    nombre: editingStudent.nombre,
-                })
-                .eq('id', editingStudent.id)
-
-            if (error) throw error
-
+            // Nota: En Sheets (Code.gs) necesitaremos lógica de actualización por nombre antiguo o ID
+            // Por ahora usamos saveStudent que añade/actualiza
+            await saveStudent(editingStudent.nombre)
             setEditingStudent(null)
             fetchEstudiantes()
         } catch (error: any) {

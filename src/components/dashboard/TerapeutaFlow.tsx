@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase/client'
+import { fetchBaseData, fetchDashboardData, saveSession } from '@/lib/services/sheets'
 import { Estudiante, ProgramaActivo, ProgramaOCP, RegistroFormData, Database } from '@/types'
 import { ChevronRight, ChevronLeft, User, BookOpen, Target, Calendar, CheckCircle2, TrendingUp, Info, Search, AlertCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -39,7 +39,8 @@ export default function TerapeutaFlow() {
     async function fetchInitialData() {
         try {
             setLoading(true)
-            const { data: ests } = await supabase.from('estudiantes').select('*').eq('activo', true).order('nombre')
+            const data = await fetchBaseData()
+            const ests = (data.students || []).map((name: string) => ({ id: name, nombre: name }))
             setEstudiantes(ests || [])
         } catch (error) {
             console.error('Error fetching initial data:', error)
@@ -51,13 +52,29 @@ export default function TerapeutaFlow() {
     async function fetchProgramasForEstudiante(nombre: string) {
         try {
             setLoading(true)
-            // Fetch directly from table to ensure we have the ID for updates
-            const { data: progs } = await supabase
-                .from('registros_programas')
-                .select('*')
-                .eq('estudiante', nombre)
-                .eq('estado', 'Abierto')
-            setProgramasActivos(progs || [])
+            // Usamos fetchDashboardData para obtener registros abiertos del alumno
+            const data = await fetchDashboardData(nombre)
+            const records = data.records || []
+            
+            // Map to the expected structure in Step 3
+            const mapped = records.map((r: any, i: number) => ({
+                id: i.toString(),
+                id_sesion: r[1],
+                fecha_inicio: r[2],
+                estudiante: r[3],
+                tipo: r[4],
+                programa: r[6],
+                ocp: r[7],
+                criterio: r[7], // En GAS, el campo 7 suele tener el criterio o numero_ocp
+                estado: r[4],
+                pre_test: r[8],
+                post_test: r[9],
+                resultado_g1: r[10],
+                resultado_g2: r[11],
+                resultado_g3: r[12]
+            })).filter((r: any) => r.estado === 'Abierto')
+
+            setProgramasActivos(mapped)
         } catch (error) {
             console.error('Error fetching programs:', error)
         } finally {
@@ -96,49 +113,31 @@ export default function TerapeutaFlow() {
         try {
             setSaving(true)
             const valor = parseFloat(resultado)
-            const recordId = selectedPrograma.id
-
-            if (!recordId) {
-                throw new Error('No se pudo identificar el registro para actualizar.')
+            
+            // En el sistema de Sheets (Code.gs), 'saveSession' espera un array de registros
+            // Aquí enviamos una actualización que el script procesará para añadir o actualizar filas
+            const sessionRecord = {
+                idSesion: selectedPrograma.id_sesion || `UPDATE-${Date.now()}`,
+                fechaSesion: fecha,
+                estudiante: selectedEstudiante,
+                tipoRegistro: registroTipo, // 'Inicial' | 'Final' | 'Generalización'
+                materia: selectedPrograma.programa,
+                ocp: selectedPrograma.ocp,
+                uac: registroTipo === 'Final' ? valor : (registroTipo === 'Inicial' ? valor : 0),
+                uai: 0,
+                nivelAyuda: 'N/A',
+                reforzador: 'N/A',
+                programaReforzamiento: 'N/A'
             }
 
-            let updateData: any = {}
+            await saveSession([sessionRecord])
 
-            if (registroTipo === 'Inicial') {
-                updateData = { pre_test: valor }
-            } else if (registroTipo === 'Final') {
-                updateData = {
-                    post_test: valor,
-                    fecha_final: fecha,
-                    estado: 'Logrado'
-                }
-            } else if (registroTipo === 'Generalización') {
-                if (selectedPrograma.resultado_g1 === null) {
-                    updateData = { fecha_g1: fecha, resultado_g1: valor }
-                } else if (selectedPrograma.resultado_g2 === null) {
-                    updateData = { fecha_g2: fecha, resultado_g2: valor }
-                } else if (selectedPrograma.resultado_g3 === null) {
-                    updateData = { fecha_g3: fecha, resultado_g3: valor }
-                } else {
-                    alert('Todas las generalizaciones (G1, G2, G3) ya han sido registradas.')
-                    setSaving(false)
-                    return
-                }
-            }
-
-            const { error } = await (supabase
-                .from('registros_programas') as any)
-                .update(updateData)
-                .eq('id', recordId)
-
-            if (error) throw error
-
-            alert('¡Registro guardado exitosamente!')
+            alert('¡Registro guardado exitosamente en Sheets!')
             window.location.reload()
 
         } catch (error: any) {
             console.error('Error saving:', error)
-            alert(`Error al guardar: ${error.message}`)
+            alert(`Error al guardar en Sheets: ${error.message}`)
         } finally {
             setSaving(false)
         }

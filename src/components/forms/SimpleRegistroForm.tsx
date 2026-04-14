@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase/client'
+import { fetchBaseData, fetchCatalog, saveSession } from '@/lib/services/sheets'
 
 interface SimpleRegistroFormProps {
     onSubmit: () => void
@@ -26,13 +26,13 @@ export default function SimpleRegistroForm({ onSubmit, onCancel }: SimpleRegistr
     async function fetchData() {
         try {
             setLoading(true)
-            const [estudiantesRes, programasRes] = await Promise.all([
-                supabase.from('estudiantes').select('*').eq('activo', true).order('nombre'),
-                supabase.from('programas_catalogo').select('*').order('nombre')
+            const [baseData, catalogData] = await Promise.all([
+                fetchBaseData(),
+                fetchCatalog()
             ])
 
-            setEstudiantes(estudiantesRes.data || [])
-            setProgramas(programasRes.data || [])
+            setEstudiantes(baseData.students.map((name: string) => ({ id: name, nombre: name })) || [])
+            setProgramas(catalogData || [])
         } catch (error) {
             console.error('Error loading data:', error)
         } finally {
@@ -40,18 +40,19 @@ export default function SimpleRegistroForm({ onSubmit, onCancel }: SimpleRegistr
         }
     }
 
-    async function handleProgramaChange(programaId: string) {
-        const programa = programas.find(p => p.id === programaId)
+    async function handleProgramaChange(nombre: string) {
+        const programa = programas.find(p => p.nombre === nombre)
         setSelectedPrograma(programa)
         setSelectedOcp(null)
 
-        if (programaId) {
-            const { data } = await supabase
-                .from('programas_ocp')
-                .select('*')
-                .eq('programa_id', programaId)
-                .order('numero_ocp')
-            setOcps(data || [])
+        if (programa && programa.criterios) {
+            // Transformar criterios [string] a [{id, numero_ocp, criterio}]
+            const criteriaList = programa.criterios.map((c: string, i: number) => ({
+                id: `${nombre}-${i}`,
+                numero_ocp: i + 1,
+                criterio: c
+            }))
+            setOcps(criteriaList)
         } else {
             setOcps([])
         }
@@ -68,16 +69,22 @@ export default function SimpleRegistroForm({ onSubmit, onCancel }: SimpleRegistr
         try {
             const guatemalaDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' })
 
-            const { error } = await (supabase.from('registros_programas') as any).insert([{
+            // Formatear para el saveSession de Code.gs
+            const sessionRecord = {
+                idSesion: `SES-${Date.now()}`,
+                fechaSesion: guatemalaDate,
                 estudiante: selectedEstudiante,
-                programa: selectedPrograma.nombre,
+                tipoRegistro: 'Terapéutico',
+                materia: selectedPrograma.nombre,
                 ocp: selectedOcp.numero_ocp,
-                criterio: selectedOcp.criterio,
-                estado: 'Abierto',
-                fecha_inicio: guatemalaDate
-            }])
+                uac: 0,
+                uai: 0,
+                nivelAyuda: 'N/A',
+                reforzador: 'N/A',
+                programaReforzamiento: 'N/A'
+            }
 
-            if (error) throw error
+            await saveSession([sessionRecord])
 
             alert('✅ Programa asignado exitosamente')
             onSubmit()
@@ -123,14 +130,14 @@ export default function SimpleRegistroForm({ onSubmit, onCancel }: SimpleRegistr
                     Programa <span className="text-red-500">*</span>
                 </label>
                 <select
-                    value={selectedPrograma?.id || ''}
+                    value={selectedPrograma?.nombre || ''}
                     onChange={(e) => handleProgramaChange(e.target.value)}
                     className="input w-full h-14 text-base font-medium"
                     required
                 >
                     <option value="">-- Seleccionar programa --</option>
                     {programas.map(prog => (
-                        <option key={prog.id} value={prog.id}>{prog.nombre}</option>
+                        <option key={prog.nombre} value={prog.nombre}>{prog.nombre}</option>
                     ))}
                 </select>
             </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Plus, Search, BookOpen, Edit, Trash2, ChevronDown, ChevronUp, Target, Save, X, AlertCircle } from 'lucide-react'
-import { supabase } from '@/lib/supabase/client'
+import { fetchCatalog, saveCatalogProgram } from '@/lib/services/sheets'
 import { useRole } from '@/lib/contexts/RoleContext'
 import { ProgramaOCP } from '@/types'
 
@@ -12,7 +12,7 @@ export default function ProgramasCatalogPage() {
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [showAddModal, setShowAddModal] = useState(false)
-    const [newProgram, setNewProgram] = useState({ nombre: '', descripcion: '', tipo: 'Terapéutico' })
+    const [newProgram, setNewProgram] = useState({ nombre: '', descripcion: '', tipo: 'Terapéutico', criterios: [''] })
     const [editingProgram, setEditingProgram] = useState<any>(null)
     const [isSaving, setIsSaving] = useState(false)
     const [expandedProgram, setExpandedProgram] = useState<string | null>(null)
@@ -25,17 +25,14 @@ export default function ProgramasCatalogPage() {
 
     async function fetchProgramas() {
         setLoading(true)
-        const { data, error } = await (supabase
-            .from('programas_catalogo') as any)
-            .select('*')
-            .order('nombre')
-
-        if (error) {
-            console.error('Error fetching programas:', error)
-        } else {
+        try {
+            const data = await fetchCatalog()
             setProgramas(data || [])
+        } catch (error) {
+            console.error('Error fetching programas:', error)
+        } finally {
+            setLoading(false)
         }
-        setLoading(false)
     }
 
     async function fetchOcps(programaId: string) {
@@ -65,19 +62,41 @@ export default function ProgramasCatalogPage() {
 
     async function handleAddProgram(e: React.FormEvent) {
         e.preventDefault()
+        if (!newProgram.nombre) return
+        
         setIsSaving(true)
-        const { error } = await (supabase
-            .from('programas_catalogo') as any)
-            .insert([newProgram])
-
-        if (error) {
-            alert(`Error al guardar: ${error.message}`)
-        } else {
-            setNewProgram({ nombre: '', descripcion: '', tipo: 'Terapéutico' })
+        try {
+            await saveCatalogProgram(newProgram.nombre, newProgram.criterios)
+            setNewProgram({ nombre: '', descripcion: '', tipo: 'Terapéutico', criterios: [''] })
             setShowAddModal(false)
             fetchProgramas()
+        } catch (error: any) {
+            alert(`Error al guardar: ${error.message}`)
+        } finally {
+            setIsSaving(false)
         }
-        setIsSaving(false)
+    }
+
+    function addCriterioInput() {
+        setNewProgram(prev => ({
+            ...prev,
+            criterios: [...prev.criterios, '']
+        }))
+    }
+
+    function removeCriterioInput(index: number) {
+        setNewProgram(prev => ({
+            ...prev,
+            criterios: prev.criterios.filter((_, i) => i !== index)
+        }))
+    }
+
+    function updateCriterioValue(index: number, value: string) {
+        setNewProgram(prev => {
+            const newCriterios = [...prev.criterios]
+            newCriterios[index] = value
+            return { ...prev, criterios: newCriterios }
+        })
     }
 
     async function handleDeleteOcp(id: string, programId: string) {
@@ -437,6 +456,40 @@ export default function ProgramasCatalogPage() {
                                     </button>
                                 </div>
                             </div>
+                            <div>
+                                <label className="text-sm font-black text-slate-900 uppercase tracking-widest block mb-3 ml-1">Criterios Técnicos *</label>
+                                <div className="space-y-3">
+                                    {newProgram.criterios.map((criterio, index) => (
+                                        <div key={index} className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                required
+                                                className="input h-12 rounded-xl bg-slate-50 border-transparent focus:bg-white focus:border-blue-500 transition-all text-sm font-semibold flex-1"
+                                                value={criterio}
+                                                onChange={e => updateCriterioValue(index, e.target.value)}
+                                                placeholder={`Criterio ${index + 1}`}
+                                            />
+                                            {newProgram.criterios.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeCriterioInput(index)}
+                                                    className="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                                >
+                                                    <X size={20} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={addCriterioInput}
+                                        className="w-full py-3 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 font-bold text-sm flex items-center justify-center gap-2 hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50/50 transition-all mt-2"
+                                    >
+                                        <Plus size={18} />
+                                        <span>Añadir otro criterio</span>
+                                    </button>
+                                </div>
+                            </div>
                             <div className="flex gap-4 pt-4">
                                 <button
                                     type="button"
@@ -450,7 +503,7 @@ export default function ProgramasCatalogPage() {
                                     disabled={isSaving || !newProgram.nombre}
                                     className="btn btn-primary flex-1 h-16 rounded-2xl text-lg font-bold shadow-2xl shadow-blue-200 active:scale-95 transition-all"
                                 >
-                                    {isSaving ? 'Definiendo...' : 'Crear Programa'}
+                                    {isSaving ? 'Guardando...' : 'Crear Programa'}
                                 </button>
                             </div>
                         </form>

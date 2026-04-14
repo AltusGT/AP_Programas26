@@ -4,8 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { registroSchema, defaultValues, type RegistroFormData } from '@/lib/validations/registro'
-import { supabase } from '@/lib/supabase/client'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { fetchBaseData, fetchCatalog } from '@/lib/services/sheets'
 import type { Database } from '@/types/database.types'
 import FormSection from './FormSection'
 import PercentageInput from './PercentageInput'
@@ -47,25 +46,15 @@ export default function RegistroForm({
             if (!selectedProgramaNombre || !selectedOcpNumero) return
 
             try {
-                // 1. Obtener ID del programa desde el catálogo
-                // Usamos 'as any' temporalmente debido a discrepancias en la inferencia de tipos genéricos
-                const { data: prog } = await (supabase
-                    .from('programas_catalogo') as any)
-                    .select('id')
-                    .eq('nombre', selectedProgramaNombre)
-                    .single()
+                // Conectar con el catálogo cargado localmente o consultado a GAS
+                const catalog = await fetchCatalog()
+                const prog = catalog.find((p: any) => p.nombre === selectedProgramaNombre)
 
-                if (prog) {
-                    // 2. Obtener el criterio específico para ese OCP
-                    const { data: ocpData } = await (supabase
-                        .from('programas_ocp') as any)
-                        .select('criterio')
-                        .eq('programa_id', prog.id)
-                        .eq('numero_ocp', selectedOcpNumero)
-                        .single()
-
-                    if (ocpData) {
-                        setValue('criterio', ocpData.criterio, { shouldDirty: true })
+                if (prog && prog.criterios) {
+                    // El OCP es 1-indexed (numero_ocp)
+                    const index = parseInt(selectedOcpNumero) - 1
+                    if (prog.criterios[index]) {
+                        setValue('criterio', prog.criterios[index], { shouldDirty: true })
                     }
                 }
             } catch (error) {
@@ -88,24 +77,16 @@ export default function RegistroForm({
         async function fetchData() {
             setIsLoading(true)
             try {
-                // Fetch estudiantes
-                const { data: estudiantesData, error: estudiantesError } = await supabase
-                    .from('estudiantes')
-                    .select('id, nombre')
-                    .order('nombre')
-
-                if (estudiantesError) throw estudiantesError
-
-                // Fetch programas
-                const { data: programasData, error: programasError } = await supabase
-                    .from('programas_catalogo')
-                    .select('id, nombre')
-                    .order('nombre')
-
-                if (programasError) throw programasError
-
-                setEstudiantes(estudiantesData || [])
-                setProgramas(programasData || [])
+                const data = await fetchBaseData()
+                
+                // Mapear estudiantes (ya vienen como array de strings en getData de GAS)
+                // O si vienen formateados de otra forma, ajustamos.
+                // Basado en Code.gs: students = studentsSheet.getRange(...).getValues().flat().filter(String);
+                setEstudiantes(data.students.map((name: string) => ({ id: name, nombre: name })))
+                
+                // El catálogo dinámico ahora viene de Programas_criterios
+                const catalog = await fetchCatalog()
+                setProgramas(catalog.map((p: any) => ({ id: p.nombre, nombre: p.nombre })))
             } catch (error) {
                 console.error('Error loading data:', error)
             } finally {

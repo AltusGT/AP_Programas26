@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase/client'
+import { fetchDashboardData } from '@/lib/services/sheets'
 import type { MetricasDashboard, ProgramaActivo } from '@/types'
 import MetricsCard from './MetricsCard'
 import ProgramsTable from './ProgramsTable'
@@ -18,34 +18,52 @@ export default function Dashboard() {
 
     useEffect(() => {
         if (role === 'supervisora') {
-            fetchDashboardData()
+            fetchDashboardDataFromSheets()
         } else {
             setLoading(false)
         }
     }, [role])
 
-    async function fetchDashboardData() {
+    async function fetchDashboardDataFromSheets() {
         try {
             setLoading(true)
             setError(null)
 
-            const { data: metricsData, error: metricsError } = await supabase
-                .from('vista_metricas_dashboard')
-                .select('*')
-                .single()
+            const data = await fetchDashboardData()
+            
+            if (data.error) throw new Error(data.error)
 
-            if (metricsError) throw metricsError
+            // Mapeo básico de métricas desde los registros crudos de Sheets
+            // Nota: En la versión Supabase teníamos vistas, aquí calculamos o usamos lo que venga de GAS
+            const records = data.records || []
+            const uniqueStudents = [...new Set(records.map((r: any) => r[3]))].length
+            const openPrograms = records.filter((r: any) => r[4] === 'Abierto').length
 
-            const { data: programsData, error: programsError } = await supabase
-                .from('vista_programas_activos')
-                .select('*')
-                .order('fecha_inicio', { ascending: false })
-                .limit(50)
+            setMetrics({
+                programas_abiertos: openPrograms,
+                programas_logrados: records.filter((r: any) => r[4] === 'Logrado').length,
+                total_estudiantes: uniqueStudents,
+                promedio_pre_test: 0, // Necesitaríamos lógica extra en GAS o aquí
+                promedio_post_test: 0,
+                total_programas: records.length
+            })
 
-            if (programsError) throw programsError
-
-            setMetrics(metricsData)
-            setProgramasActivos(programsData || [])
+            // Mapear records de array a objetos para ProgramsTable
+            const mappedPrograms = records.map((r: any, i: number) => ({
+                id: i.toString(),
+                id_sesion: r[1],
+                fecha_inicio: r[2],
+                estudiante: r[3],
+                tipo_registro: r[4],
+                programa: r[6],
+                materia_programa: r[6],
+                ocp: r[7],
+                estado: r[4],
+                pre_test: r[8],
+                post_test: r[9]
+            }))
+            
+            setProgramasActivos(mappedPrograms)
         } catch (err: any) {
             console.error('Error fetching dashboard data:', err)
             setError(err.message || 'Error al cargar los datos del dashboard')
@@ -77,7 +95,7 @@ export default function Dashboard() {
                     <h2 className="text-xl font-bold mb-2">Error de Conexión</h2>
                     <p className="text-red-600/80 mb-6">{error}</p>
                     <button
-                        onClick={() => fetchDashboardData()}
+                        onClick={() => fetchDashboardDataFromSheets()}
                         className="btn btn-primary px-8"
                     >
                         Reintentar
