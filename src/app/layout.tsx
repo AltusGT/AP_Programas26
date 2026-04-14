@@ -47,6 +47,10 @@ export const metadata: Metadata = {
         title: 'Programas Terapéuticos',
         description: 'Sistema de registro y seguimiento de programas terapéuticos',
     },
+    icons: {
+        icon: '/favicon.ico',
+        apple: '/logo.png',
+    },
 }
 
 // Viewport configuration for PWA
@@ -76,10 +80,6 @@ export default function RootLayout({
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-
-                {/* Favicon */}
-                <link rel="icon" href="/favicon.ico" />
-                <link rel="apple-touch-icon" href="/logo.png" />
             </head>
             <body className="font-roboto antialiased min-h-screen bg-slate-50">
                 <RoleProvider>

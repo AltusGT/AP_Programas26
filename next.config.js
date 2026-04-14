@@ -1,23 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    output: 'export', // Necesario para exportación estática en GitHub Pages
+    basePath: '/AP_Programas26', // Nombre del repositorio en GitHub
+    trailingSlash: true, // Mejora la compatibilidad de rutas en hosts estáticos
 
-    // PWA Configuration
-    // experimental: {
-    //    optimizeCss: true,
-    // },
-
-    // Image optimization
+    // Image optimization - GitHub Pages no soporta optimización dinámica de imágenes de Next.js
     images: {
-        formats: ['image/avif', 'image/webp'],
-        deviceSizes: [640, 750, 828, 1080, 1200, 1920],
-        imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+        unoptimized: true,
     },
 
-    // Environment variables validation
+    // Environment variables
     env: {
-        NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        NEXT_PUBLIC_GAS_URL: process.env.NEXT_PUBLIC_GAS_URL,
     },
 }
 
