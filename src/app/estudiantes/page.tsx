@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Plus, Search, User, Trash2, Edit, ClipboardList, X, Check, BookOpen } from 'lucide-react'
-import { fetchBaseData, saveStudent, fetchCatalog, saveAssignment } from '@/lib/services/sheets'
+import { fetchBaseData, saveStudent, fetchCatalog, saveAssignment, fetchDashboardData, saveSession } from '@/lib/services/sheets'
 
 export default function EstudiantesPage() {
     const [estudiantes, setEstudiantes] = useState<any[]>([])
@@ -64,15 +64,36 @@ export default function EstudiantesPage() {
         }
     }
 
+    async function fetchAssignments(nombre: string) {
+        setLoadingAssignments(true)
+        try {
+            const data = await fetchDashboardData(nombre)
+            const records = data.records || []
+            
+            // Mapeamos los registros que tengan estado 'Abierto'
+            const mapped = records.map((r: any, i: number) => ({
+                id: `assign-${i}`,
+                estudiante: r[3],
+                programa: r[6],
+                ocp: r[7],
+                criterio: r[7],
+                estado: r[4],
+                fecha_inicio: r[2]
+            })).filter((r: any) => r.estado === 'Abierto')
+
+            setActiveAssignments(mapped)
+        } catch (error) {
+            console.error('Error fetching assignments:', error)
+        } finally {
+            setLoadingAssignments(false)
+        }
+    }
+
     async function openManagePlan(estudiante: any) {
         setManagingStudent(estudiante)
-        setLoadingAssignments(true)
         setSelectedOcpsToClose(new Set())
         fetchPrograms()
-
-        // Por ahora, simulamos que no hay anteriores o los traemos de una acción futura 'getAssignments'
-        setActiveAssignments([])
-        setLoadingAssignments(false)
+        fetchAssignments(estudiante.nombre)
     }
 
     function toggleOcpSelection(ocpId: string) {
@@ -95,26 +116,39 @@ export default function EstudiantesPage() {
 
         if (!confirm(`¿Estás segura de marcar ${selectedOcpsToClose.size} objetivo(s) como LOGRADO(S)?`)) return
 
+        setIsSaving(true)
         try {
             const guatemalaDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' })
-            const { error } = await (supabase.from('registros_programas') as any)
-                .update({ estado: 'Logrado', fecha_final: guatemalaDate })
-                .in('id', Array.from(selectedOcpsToClose))
+            
+            // En el sistema de Sheets, 'cerrar' significa enviar un registro con tipo 'Final' o actualizar el estado
+            // Para simplificar y mantener compatibilidad, enviamos una sesión con tipo 'Final'
+            const recordsToClose = Array.from(selectedOcpsToClose).map(id => {
+                const assign = activeAssignments.find(a => a.id === id)
+                return {
+                    idSesion: `CLOSE-${Date.now()}-${id}`,
+                    fechaSesion: guatemalaDate,
+                    estudiante: managingStudent.nombre,
+                    tipoRegistro: 'Final',
+                    materia: assign.programa,
+                    ocp: assign.ocp,
+                    uac: 100, // Marcamos como logrado (100%)
+                    uai: 0,
+                    nivelAyuda: 'N/A',
+                    reforzador: 'N/A',
+                    programaReforzamiento: 'N/A'
+                }
+            })
 
-            if (error) throw error
+            await saveSession(recordsToClose)
 
-            // Refresh
-            const { data } = await supabase
-                .from('registros_programas')
-                .select('*')
-                .eq('estudiante', managingStudent.nombre)
-                .eq('estado', 'Abierto')
-                .order('fecha_inicio', { ascending: false })
-            setActiveAssignments(data || [])
+            // Refresh local state
+            fetchAssignments(managingStudent.nombre)
             setSelectedOcpsToClose(new Set()) // Reset selection
             alert('¡Objetivos cerrados exitosamente!')
         } catch (err: any) {
             alert('Error al cerrar objetivos: ' + err.message)
+        } finally {
+            setIsSaving(false)
         }
     }
 

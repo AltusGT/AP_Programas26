@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { fetchBaseData, fetchCatalog, saveSession } from '@/lib/services/sheets'
+import { fetchBaseData, fetchCatalog, saveAssignment } from '@/lib/services/sheets'
 
 interface SimpleRegistroFormProps {
     onSubmit: () => void
@@ -69,22 +69,17 @@ export default function SimpleRegistroForm({ onSubmit, onCancel }: SimpleRegistr
         try {
             const guatemalaDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' })
 
-            // Formatear para el saveSession de Code.gs
-            const sessionRecord = {
-                idSesion: `SES-${Date.now()}`,
-                fechaSesion: guatemalaDate,
+            // Usar saveAssignment para vincular al catálogo
+            const assignmentData = {
                 estudiante: selectedEstudiante,
-                tipoRegistro: 'Terapéutico',
-                materia: selectedPrograma.nombre,
+                programa: selectedPrograma.nombre,
                 ocp: selectedOcp.numero_ocp,
-                uac: 0,
-                uai: 0,
-                nivelAyuda: 'N/A',
-                reforzador: 'N/A',
-                programaReforzamiento: 'N/A'
+                criterio: selectedOcp.criterio,
+                estado: 'Abierto',
+                fecha_inicio: guatemalaDate
             }
 
-            await saveSession([sessionRecord])
+            await saveAssignment(assignmentData)
 
             alert('✅ Programa asignado exitosamente')
             onSubmit()

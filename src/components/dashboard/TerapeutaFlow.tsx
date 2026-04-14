@@ -6,7 +6,7 @@ import { Estudiante, ProgramaActivo, ProgramaOCP, RegistroFormData, Database } f
 import { ChevronRight, ChevronLeft, User, BookOpen, Target, Calendar, CheckCircle2, TrendingUp, Info, Search, AlertCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-export default function TerapeutaFlow() {
+export default function TerapeutaFlow({ onAssignNew }: { onAssignNew?: () => void }) {
     const router = useRouter()
     const [step, setStep] = useState(1)
     const [loading, setLoading] = useState(true)
@@ -82,10 +82,10 @@ export default function TerapeutaFlow() {
         }
     }
 
-    const handleSelectEstudiante = (nombre: string) => {
+    const handleSelectEstudiante = async (nombre: string) => {
         setSelectedEstudiante(nombre)
-        fetchProgramasForEstudiante(nombre)
         setStep(2)
+        await fetchProgramasForEstudiante(nombre)
     }
 
     const handleSelectProgramName = (nombre: string) => {
@@ -271,7 +271,12 @@ export default function TerapeutaFlow() {
                                 <div className="p-16 text-center bg-slate-50 rounded-[40px] border-4 border-dashed border-slate-200">
                                     <AlertCircle className="mx-auto text-slate-300 mb-4" size={48} />
                                     <p className="text-slate-500 font-bold text-lg">No hay programas asignados.</p>
-                                    <button onClick={() => router.push('/registro')} className="btn btn-primary mt-6 h-14 px-8 rounded-2xl">Asignar Nuevo</button>
+                                    <button 
+                                        onClick={() => onAssignNew ? onAssignNew() : router.push('/registro')} 
+                                        className="btn btn-primary mt-6 h-14 px-8 rounded-2xl"
+                                    >
+                                        Asignar Nuevo
+                                    </button>
                                 </div>
                             )}
                         </div>

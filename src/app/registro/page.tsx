@@ -18,7 +18,7 @@ function RegistroContent() {
                     <button onClick={() => setMode('choice')} className="flex items-center gap-2 text-slate-400 hover:text-slate-600 mb-4 font-bold">
                         <ArrowLeft size={20} /> Volver al menú
                     </button>
-                    <TerapeutaFlow />
+                    <TerapeutaFlow onAssignNew={() => setMode('assignment')} />
                 </div>
             </div>
         )
