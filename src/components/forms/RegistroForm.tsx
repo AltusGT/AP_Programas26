@@ -52,7 +52,7 @@ export default function RegistroForm({
 
                 if (prog && prog.criterios) {
                     // El OCP es 1-indexed (numero_ocp)
-                    const index = parseInt(selectedOcpNumero) - 1
+                    const index = Number(selectedOcpNumero) - 1
                     if (prog.criterios[index]) {
                         setValue('criterio', prog.criterios[index], { shouldDirty: true })
                     }
