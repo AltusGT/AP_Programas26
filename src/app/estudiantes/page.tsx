@@ -414,7 +414,7 @@ export default function EstudiantesPage() {
                                                 onChange={(e) => {
                                                     const prog = availablePrograms.find(p => p.id === e.target.value)
                                                     setSelectedProgram(prog)
-                                                    setSelectedOcp(null)
+                                                    setSelectedOcps([])
                                                     if (prog) fetchOcps(prog.id)
                                                 }}
                                                 value={selectedProgram?.id || ''}
