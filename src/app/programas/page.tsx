@@ -36,27 +36,15 @@ export default function ProgramasCatalogPage() {
     }
 
     async function fetchOcps(programaId: string) {
-        const { data, error } = await supabase
-            .from('programas_ocp')
-            .select('*')
-            .eq('programa_id', programaId)
-            .order('numero_ocp')
-
-        if (error) {
-            console.error('Error fetching OCPs:', error)
-        } else {
-            setProgramOcps(prev => ({ ...prev, [programaId]: data || [] }))
-        }
+        // En Sheets, los criterios ya vienen dentro del objeto programa
+        // No necesitamos una llamada extra.
     }
 
-    const toggleExpand = (programaId: string) => {
-        if (expandedProgram === programaId) {
+    const toggleExpand = (programaNombre: string) => {
+        if (expandedProgram === programaNombre) {
             setExpandedProgram(null)
         } else {
-            setExpandedProgram(programaId)
-            if (!programOcps[programaId]) {
-                fetchOcps(programaId)
-            }
+            setExpandedProgram(programaNombre)
         }
     }
 
@@ -99,39 +87,41 @@ export default function ProgramasCatalogPage() {
         })
     }
 
-    async function handleDeleteOcp(id: string, programId: string) {
+    async function handleDeleteOcp(index: number, prog: any) {
         if (!confirm('¿Eliminar este criterio técnico?')) return
-        const { error } = await supabase.from('programas_ocp').delete().eq('id', id)
-        if (!error) fetchOcps(programId)
+        setIsSaving(true)
+        try {
+            const nuevosCriterios = prog.criterios.filter((_: any, i: number) => i !== index)
+            await saveCatalogProgram(prog.nombre, nuevosCriterios)
+            fetchProgramas()
+        } catch (error: any) {
+            alert(`Error: ${error.message}`)
+        } finally {
+            setIsSaving(false)
+        }
     }
 
     async function handleSaveOcp() {
-        if (!editingOcp) return
+        if (!editingOcp || !expandedProgram) return
         setIsSaving(true)
         try {
-            let error;
-            if (editingOcp.id) {
-                const { error: err } = await (supabase
-                    .from('programas_ocp') as any)
-                    .update({ criterio: editingOcp.criterio })
-                    .eq('id', editingOcp.id)
-                error = err
+            const prog = programas.find(p => p.nombre === expandedProgram)
+            if (!prog) return
+
+            let nuevosCriterios = [...(prog.criterios || [])]
+            if (editingOcp.id !== undefined) {
+                // Editando existente (usamos el numero_ocp como indice - 1)
+                nuevosCriterios[editingOcp.numero_ocp - 1] = editingOcp.criterio
             } else {
-                const { error: err } = await (supabase
-                    .from('programas_ocp') as any)
-                    .insert([{
-                        programa_id: editingOcp.programa_id,
-                        numero_ocp: editingOcp.numero_ocp,
-                        criterio: editingOcp.criterio
-                    }])
-                error = err
+                // Nuevo
+                nuevosCriterios.push(editingOcp.criterio)
             }
 
-            if (error) throw error
-            fetchOcps(editingOcp.programa_id)
+            await saveCatalogProgram(prog.nombre, nuevosCriterios)
             setEditingOcp(null)
+            fetchProgramas()
         } catch (error: any) {
-            alert(`Error al guardar OCP: ${error.message}`)
+            alert(`Error al guardar: ${error.message}`)
         } finally {
             setIsSaving(false)
         }
@@ -141,36 +131,21 @@ export default function ProgramasCatalogPage() {
         e.preventDefault()
         if (!editingProgram) return
         setIsSaving(true)
-        const { error } = await (supabase
-            .from('programas_catalogo') as any)
-            .update({
-                nombre: editingProgram.nombre,
-                descripcion: editingProgram.descripcion
-            })
-            .eq('id', editingProgram.id)
-
-        if (error) {
-            alert(`Error al actualizar: ${error.message}`)
-        } else {
+        try {
+            await saveCatalogProgram(editingProgram.nombre, editingProgram.criterios)
             setEditingProgram(null)
             fetchProgramas()
+        } catch (error: any) {
+            alert(`Error: ${error.message}`)
+        } finally {
+            setIsSaving(false)
         }
-        setIsSaving(false)
     }
 
-    async function handleDeleteProgram(id: string) {
-        if (!confirm('¿Estás seguro de que deseas eliminar este programa? Esta acción no se puede deshacer.')) return
-
-        const { error } = await (supabase
-            .from('programas_catalogo') as any)
-            .delete()
-            .eq('id', id)
-
-        if (error) {
-            alert(`Error al eliminar: ${error.message}`)
-        } else {
-            fetchProgramas()
-        }
+    async function handleDeleteProgram(nombre: string) {
+        if (!confirm('¿Estás seguro de que deseas eliminar este programa?')) return
+        // Nota: Para eliminarlos de Sheets, podrías implementar una acción 'deleteCatalog'
+        alert('La eliminación de programas está restringida en Sheets para evitar pérdida accidental de datos históricos.')
     }
 
     const filteredProgramas = programas.filter(prog =>
@@ -237,8 +212,7 @@ export default function ProgramasCatalogPage() {
             ) : filteredProgramas.length > 0 ? (
                 <div className="space-y-6">
                     {filteredProgramas.map((prog) => {
-                        const isExpanded = expandedProgram === prog.id
-                        const ocps = programOcps[prog.id] || []
+                        const isExpanded = expandedProgram === prog.nombre
 
                         return (
                             <div key={prog.id} className={`group bg-white rounded-[32px] border-2 transition-all duration-500 overflow-hidden ${isExpanded ? 'border-blue-500 shadow-2xl shadow-blue-100 ring-8 ring-blue-50/50' : 'border-slate-100 hover:border-slate-200 shadow-sm'}`}>
@@ -277,7 +251,7 @@ export default function ProgramasCatalogPage() {
                                             </button>
                                         </div>
                                         <button
-                                            onClick={() => toggleExpand(prog.id)}
+                                            onClick={() => toggleExpand(prog.nombre)}
                                             className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${isExpanded ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
                                         >
                                             {isExpanded ? <ChevronUp size={28} /> : <ChevronDown size={28} />}
@@ -300,29 +274,30 @@ export default function ProgramasCatalogPage() {
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            {ocps.map((ocp, index) => {
-                                                const isEditing = editingOcp?.id === ocp.id
+                                            {(prog.criterios || []).map((criterio: string, index: number) => {
+                                                const numero_ocp = index + 1
+                                                const isEditing = editingOcp?.numero_ocp === numero_ocp && editingOcp.id === 'temp'
 
                                                 return (
-                                                    <div key={ocp.id} className={`relative group/item bg-white p-6 rounded-[28px] border-2 transition-all duration-300 ${isEditing ? 'border-blue-500 shadow-2xl scale-105 z-10' : 'border-transparent hover:border-blue-100 shadow-sm hover:shadow-xl hover:shadow-blue-500/5'}`}>
+                                                    <div key={index} className={`relative group/item bg-white p-6 rounded-[28px] border-2 transition-all duration-300 ${isEditing ? 'border-blue-500 shadow-2xl scale-105 z-10' : 'border-transparent hover:border-blue-100 shadow-sm hover:shadow-xl hover:shadow-blue-500/5'}`}>
                                                         <div className="flex items-center justify-between mb-4">
                                                             <span className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black bg-slate-900 text-white">
-                                                                {ocp.numero_ocp}
+                                                                {numero_ocp}
                                                             </span>
                                                             <div className="flex gap-2">
                                                                 <button
                                                                     onClick={() => setEditingOcp({
-                                                                        id: ocp.id,
-                                                                        programa_id: prog.id,
-                                                                        numero_ocp: ocp.numero_ocp,
-                                                                        criterio: ocp.criterio
+                                                                        id: 'temp',
+                                                                        programa_id: prog.nombre,
+                                                                        numero_ocp: numero_ocp,
+                                                                        criterio: criterio
                                                                     })}
                                                                     className="p-2 rounded-full text-blue-600 bg-blue-50 opacity-0 group-hover/item:opacity-100 transition-opacity hover:bg-blue-100"
                                                                 >
                                                                     <Edit size={14} />
                                                                 </button>
                                                                 <button
-                                                                    onClick={() => handleDeleteOcp(ocp.id, prog.id)}
+                                                                    onClick={() => handleDeleteOcp(index, prog)}
                                                                     className="p-2 rounded-full text-red-600 bg-red-50 opacity-0 group-hover/item:opacity-100 transition-opacity hover:bg-red-100"
                                                                 >
                                                                     <Trash2 size={14} />
@@ -344,7 +319,7 @@ export default function ProgramasCatalogPage() {
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <p className="text-sm leading-relaxed text-slate-700 font-semibold">{ocp.criterio}</p>
+                                                            <p className="text-sm leading-relaxed text-slate-700 font-semibold">{criterio}</p>
                                                         )}
                                                     </div>
                                                 )
@@ -381,7 +356,7 @@ export default function ProgramasCatalogPage() {
                                                     <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-300 group-hover:text-blue-500 group-hover:scale-110 transition-all">
                                                         <Plus size={24} />
                                                     </div>
-                                                    <span className="font-bold text-slate-400 group-hover:text-blue-600">Añadir Criterio {ocps.length + 1}</span>
+                                                    <span className="font-bold text-slate-400 group-hover:text-blue-600">Añadir Criterio {(prog.criterios || []).length + 1}</span>
                                                 </button>
                                             )}
                                         </div>
