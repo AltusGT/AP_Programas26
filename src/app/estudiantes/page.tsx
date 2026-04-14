@@ -19,7 +19,7 @@ export default function EstudiantesPage() {
     const [availablePrograms, setAvailablePrograms] = useState<any[]>([])
     const [availableOcps, setAvailableOcps] = useState<any[]>([])
     const [selectedProgram, setSelectedProgram] = useState<any>(null)
-    const [selectedOcp, setSelectedOcp] = useState<any>(null)
+    const [selectedOcps, setSelectedOcps] = useState<any[]>([])
     const [loadingAssignments, setLoadingAssignments] = useState(false)
     const [selectedOcpsToClose, setSelectedOcpsToClose] = useState<Set<string>>(new Set())
 
@@ -118,37 +118,51 @@ export default function EstudiantesPage() {
         }
     }
 
+    function toggleOcpForAssignment(ocp: any) {
+        setSelectedOcps(prev => {
+            const exists = prev.find(o => o.id === ocp.id)
+            if (exists) {
+                return prev.filter(o => o.id !== ocp.id)
+            } else {
+                return [...prev, ocp]
+            }
+        })
+    }
+
     async function handleAddAssignment() {
-        if (!selectedProgram || !selectedOcp) return
+        if (!selectedProgram || selectedOcps.length === 0) return
         setIsSaving(true)
         try {
-            await saveAssignment({
-                estudiante: managingStudent.nombre,
-                programa: selectedProgram.nombre,
-                ocp: selectedOcp.numero_ocp,
-                criterio: selectedOcp.criterio,
-                estado: 'Abierto',
-                fecha_inicio: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' })
-            })
-
-            // Para que se vea en la lista actual (optimista)
-            const newAssign = {
-                id: Math.random().toString(),
-                estudiante: managingStudent.nombre,
-                programa: selectedProgram.nombre,
-                ocp: selectedOcp.numero_ocp,
-                criterio: selectedOcp.criterio,
-                estado: 'Abierto',
-                fecha_inicio: new Date().toISOString()
+            // Guardar cada uno
+            for (const ocp of selectedOcps) {
+                await saveAssignment({
+                    estudiante: managingStudent.nombre,
+                    programa: selectedProgram.nombre,
+                    ocp: ocp.numero_ocp,
+                    criterio: ocp.criterio,
+                    estado: 'Abierto',
+                    fecha_inicio: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' })
+                })
+                
+                // Añadir a la vista (optimista)
+                const newAssign = {
+                    id: Math.random().toString(),
+                    estudiante: managingStudent.nombre,
+                    programa: selectedProgram.nombre,
+                    ocp: ocp.numero_ocp,
+                    criterio: ocp.criterio,
+                    estado: 'Abierto',
+                    fecha_inicio: new Date().toISOString()
+                }
+                setActiveAssignments(prev => [newAssign, ...prev])
             }
-            setActiveAssignments(prev => [newAssign, ...prev])
 
             // Reset selection
             setSelectedProgram(null)
-            setSelectedOcp(null)
+            setSelectedOcps([])
             setAvailableOcps([])
 
-            alert('¡Asignación guardada exitosamente!')
+            alert(`¡${selectedOcps.length} asignación(es) guardada(s) exitosamente!`)
 
         } catch (err: any) {
             alert('Error al asignar: ' + err.message)
@@ -413,44 +427,43 @@ export default function EstudiantesPage() {
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Criterio</label>
-                                            <select
-                                                className="input w-full h-12 text-sm font-bold bg-white border-transparent focus:border-blue-500 rounded-xl"
-                                                disabled={!selectedProgram}
-                                                onChange={(e) => {
-                                                    const ocp = availableOcps.find(o => o.id === e.target.value)
-                                                    setSelectedOcp(ocp)
-                                                }}
-                                                value={selectedOcp?.id || ''}
-                                            >
-                                                <option value="">-- Elige un criterio --</option>
-                                                {availableOcps.map(o => (
-                                                    <option key={o.id} value={o.id}>{o.numero_ocp} - {o.criterio.substring(0, 30)}...</option>
-                                                ))}
-                                            </select>
-                                        </div>
-
-                                        {selectedOcp && (
-                                            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                                                <div className="flex gap-3">
-                                                    <div className="w-1.5 bg-blue-500 rounded-full" />
-                                                    <p className="text-xs text-blue-800 font-medium leading-relaxed">
-                                                        <span className="block font-bold mb-1 uppercase text-blue-900/50">Criterio Seleccionado:</span>
-                                                        {selectedOcp.criterio}
-                                                    </p>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-3 ml-1">Seleccionar Criterios ({selectedOcps.length})</label>
+                                            {selectedProgram ? (
+                                                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                                    {availableOcps.map(o => (
+                                                        <label 
+                                                            key={o.id} 
+                                                            className={`flex items-start gap-3 p-3 rounded-xl border-2 transition-all cursor-pointer ${selectedOcps.find(so => so.id === o.id) ? 'border-blue-500 bg-blue-50/50' : 'border-slate-100 bg-white hover:border-slate-200'}`}
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                                                checked={!!selectedOcps.find(so => so.id === o.id)}
+                                                                onChange={() => toggleOcpForAssignment(o)}
+                                                            />
+                                                            <div className="flex-1">
+                                                                <span className="block text-[10px] font-black text-blue-600 mb-0.5 uppercase">Criterio {o.numero_ocp}</span>
+                                                                <p className="text-xs font-medium text-slate-700 leading-snug">{o.criterio}</p>
+                                                            </div>
+                                                        </label>
+                                                    ))}
                                                 </div>
-                                            </div>
-                                        )}
+                                            ) : (
+                                                <div className="p-8 text-center border-2 border-dashed border-slate-100 rounded-2xl bg-white">
+                                                    <p className="text-xs text-slate-400 font-medium">Elige un programa primero</p>
+                                                </div>
+                                            )}
+                                        </div>
 
                                         <button
                                             onClick={handleAddAssignment}
-                                            disabled={!selectedProgram || !selectedOcp || isSaving}
+                                            disabled={!selectedProgram || selectedOcps.length === 0 || isSaving}
                                             className="w-full btn btn-primary h-14 rounded-2xl shadow-lg shadow-blue-200 mt-4 font-bold flex items-center justify-center gap-2"
                                         >
                                             {isSaving ? 'Asignando...' : (
                                                 <>
                                                     <Check size={20} />
-                                                    Confirmar Asignación
+                                                    Asignar {selectedOcps.length} Criterio{selectedOcps.length !== 1 ? 's' : ''}
                                                 </>
                                             )}
                                         </button>
