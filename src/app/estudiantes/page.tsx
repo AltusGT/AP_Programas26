@@ -78,18 +78,41 @@ export default function EstudiantesPage() {
             const data = await fetchDashboardData(nombre)
             const records = data.records || []
             
-            // Mapeamos los registros que tengan estado 'Abierto'
-            const mapped = records.map((r: any, i: number) => ({
-                id: `assign-${i}`,
-                estudiante: r[3],
-                programa: r[6],
-                ocp: r[7],
-                criterio: r[7],
-                estado: r[4],
-                fecha_inicio: r[2]
-            })).filter((r: any) => r.estado === 'Abierto')
+            // 1. Identificar registros cerrados
+            const closedOcps = new Set()
+            records.forEach((r: any) => {
+                const status = r[4]
+                if (status && (status === 'Logrado' || status === 'Finalizado' || status === 'Final')) {
+                    const key = `${r[6]}-${r[7]}`
+                    closedOcps.add(key)
+                }
+            })
 
-            setActiveAssignments(mapped)
+            // 2. Mapear 'Abiertos' que NO estén en la lista de cerrados
+            const mapped = records
+                .filter((r: any) => r[4] === 'Abierto' && !closedOcps.has(`${r[6]}-${r[7]}`))
+                .map((r: any, i: number) => ({
+                    id: `assign-${i}`,
+                    estudiante: r[3],
+                    programa: r[6],
+                    ocp: r[7],
+                    criterio: r[7],
+                    estado: r[4],
+                    fecha_inicio: r[2]
+                }))
+
+            // Evitar duplicados si hay varios 'Abierto' para el mismo objetivo
+            const uniqueAssignments: any[] = []
+            const seenKeys = new Set()
+            mapped.forEach((a: any) => {
+                const key = `${a.programa}-${a.ocp}`
+                if (!seenKeys.has(key)) {
+                    seenKeys.add(key)
+                    uniqueAssignments.push(a)
+                }
+            })
+            
+            setActiveAssignments(uniqueAssignments)
         } catch (error) {
             console.error('Error fetching assignments:', error)
         } finally {
