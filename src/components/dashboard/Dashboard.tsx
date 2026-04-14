@@ -11,12 +11,14 @@ import TerapeutaFlow from './TerapeutaFlow'
 import { ErrorBoundary } from '../ErrorBoundary'
 export default function Dashboard() {
     const { role } = useRole()
+    const [isMounted, setIsMounted] = useState(false)
     const [metrics, setMetrics] = useState<MetricasDashboard | null>(null)
     const [programasActivos, setProgramasActivos] = useState<ProgramaActivo[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
+        setIsMounted(true)
         if (role === 'supervisora') {
             fetchDashboardDataFromSheets()
         } else {
@@ -111,12 +113,12 @@ export default function Dashboard() {
         )
     }
 
-    const today = new Date().toLocaleDateString('es-ES', {
+    const today = isMounted ? new Date().toLocaleDateString('es-ES', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric'
-    })
+    }) : ''
 
     return (
         <div className="container-mobile py-8 lg:py-12 animate-fade-in">
