@@ -450,8 +450,6 @@ export default function ProgramasCatalogPage() {
                                             )}
                                         </div>
                                     ))}
-
-                                    ))}
                                     <button
                                         type="button"
                                         onClick={addCriterioInput}
