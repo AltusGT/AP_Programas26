@@ -106,26 +106,26 @@ export default function ProgramsTable({ programs }: ProgramsTableProps) {
 
                         <div className="grid grid-cols-2 gap-3 text-sm">
                             <div>
-                                <p className="text-caption mb-1">Criterio</p>
-                                <p className="text-body-sm text-slate-900 truncate">
-                                    {program.criterio}
-                                </p>
+                                <p className="text-caption mb-1">Estado</p>
+                                <span className={`badge ${program.estado === 'Logrado' ? 'badge-success' : 'badge-info'}`}>
+                                    {program.estado}
+                                </span>
                             </div>
                             <div>
                                 <p className="text-caption mb-1">Inicio</p>
-                                <p className="text-body-sm text-slate-900">
+                                <p className="text-body-sm text-slate-900 font-bold">
                                     {formatDate(program.fecha_inicio)}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-caption mb-1">Pre-Test</p>
-                                <p className="text-numeric text-body-sm text-slate-900">
-                                    {formatPercentage(program.pre_test)}
+                                <p className="text-caption mb-1">Puntaje Final</p>
+                                <p className={`text-numeric text-body-sm font-bold ${program.post_test ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                    {formatPercentage(program.post_test || program.pre_test)}
                                 </p>
                             </div>
                             <div>
                                 <p className="text-caption mb-1">Promedio G</p>
-                                <p className="text-numeric text-body-sm text-slate-900">
+                                <p className="text-numeric text-body-sm text-slate-900 font-bold">
                                     {formatPercentage(program.promedio_generalizacion)}
                                 </p>
                             </div>
@@ -201,16 +201,13 @@ export default function ProgramsTable({ programs }: ProgramsTableProps) {
                                     Pre-Test
                                 </th>
                                 <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                                    G1
+                                    Post-Test
                                 </th>
                                 <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                                    G2
+                                    Promedio G
                                 </th>
                                 <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                                    G3
-                                </th>
-                                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                                    Promedio
+                                    Estado
                                 </th>
                                 <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">
                                     Acciones
@@ -243,23 +240,22 @@ export default function ProgramsTable({ programs }: ProgramsTableProps) {
                                     <td className="px-4 py-3 text-sm text-numeric text-center text-slate-900">
                                         {formatPercentage(program.pre_test)}
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-numeric text-center text-slate-900">
-                                        {formatPercentage(program.resultado_g1)}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-numeric text-center text-slate-900">
-                                        {formatPercentage(program.resultado_g2)}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-numeric text-center text-slate-900">
-                                        {formatPercentage(program.resultado_g3)}
+                                    <td className="px-4 py-3 text-sm text-numeric text-center text-slate-900 font-bold">
+                                        {formatPercentage(program.post_test)}
                                     </td>
                                     <td className="px-4 py-3 text-sm text-numeric text-center">
-                                        <span className={`font-semibold ${program.promedio_generalizacion && program.promedio_generalizacion >= 80
+                                        <span className={`font-semibold ${Number(program.promedio_generalizacion) >= 80
                                             ? 'text-green-600'
-                                            : program.promedio_generalizacion && program.promedio_generalizacion >= 60
+                                            : Number(program.promedio_generalizacion) >= 60
                                                 ? 'text-amber-600'
                                                 : 'text-slate-900'
                                             }`}>
                                             {formatPercentage(program.promedio_generalizacion)}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-center">
+                                        <span className={`badge ${program.estado === 'Logrado' ? 'badge-success' : 'badge-info'}`}>
+                                            {program.estado}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-sm text-center">

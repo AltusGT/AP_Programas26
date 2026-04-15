@@ -11,20 +11,20 @@ import TerapeutaFlow from './TerapeutaFlow'
 import { ErrorBoundary } from '../ErrorBoundary'
 export default function Dashboard() {
     const { role } = useRole()
-    const [isMounted, setIsMounted] = useState(false)
-    const [metrics, setMetrics] = useState<MetricasDashboard | null>(null)
-    const [programasActivos, setProgramasActivos] = useState<ProgramaActivo[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    const [selectedStudent, setSelectedStudent] = useState<string>('all')
+    const [allRecords, setAllRecords] = useState<any[]>([])
+    const [viewMode, setViewMode] = useState<'dashboard' | 'flow'>('dashboard')
 
     useEffect(() => {
         setIsMounted(true)
-        if (role === 'supervisora') {
-            fetchDashboardDataFromSheets()
-        } else {
-            setLoading(false)
+        fetchDashboardDataFromSheets()
+    }, [])
+
+    useEffect(() => {
+        if (role === 'terapeuta' && !allRecords.length) {
+            setViewMode('flow')
         }
-    }, [role])
+    }, [role, allRecords])
 
     async function fetchDashboardDataFromSheets() {
         try {
@@ -36,42 +36,9 @@ export default function Dashboard() {
             if (!data || data.error) throw new Error(data?.error || 'No se recibieron datos del servidor')
 
             const records = Array.isArray(data.records) ? data.records : []
+            setAllRecords(records)
+            processRecords(records, selectedStudent)
             
-            // Calculo seguro de métricas
-            const studentsSet = new Set(records.filter(r => Array.isArray(r) && r[3]).map(r => r[3].toString().trim()))
-            const uniqueStudents = studentsSet.size
-            
-            const openPrograms = records.filter((r: any) => Array.isArray(r) && r[4] === 'Abierto').length
-            const logrados = records.filter((r: any) => Array.isArray(r) && (r[4] === 'Logrado' || r[4] === 'Finalizado')).length
-
-            setMetrics({
-                programas_abiertos: openPrograms,
-                programas_logrados: logrados,
-                total_estudiantes: uniqueStudents,
-                promedio_pre_test: 0, 
-                promedio_post_test: 0,
-                total_programas: records.length
-            })
-
-            // Mapear records de array a objetos para ProgramsTable
-            const mappedPrograms = records
-                .filter((r: any) => Array.isArray(r) && r.length >= 7)
-                .map((r: any, i: number) => ({
-                    id: i.toString(),
-                    id_sesion: r[1],
-                    fecha_inicio: r[2],
-                    estudiante: r[3],
-                    tipo_registro: r[5], // Tipo (Index 5)
-                    programa: r[6],      // Programa (Index 6)
-                    materia_programa: r[6],
-                    ocp: r[7],           // OCP Num (Index 7)
-                    criterio: r[8],      // Criterio Text (Index 8)
-                    estado: r[4],        // Estado (Index 4)
-                    pre_test: (r[5] === 'Asignación' || r[5] === 'Inicial') ? r[9] : null,
-                    post_test: r[5] === 'Final' ? r[9] : null
-                }))
-            
-            setProgramasActivos(mappedPrograms)
         } catch (err: any) {
             console.error('Error fetching dashboard data:', err)
             setError(err.message || 'Error al cargar los datos del dashboard')
@@ -79,6 +46,92 @@ export default function Dashboard() {
             setLoading(false)
         }
     }
+
+    function processRecords(records: any[], studentFilter: string) {
+        // Filtrar por estudiante si no es 'all'
+        const filteredRecords = studentFilter === 'all' 
+            ? records 
+            : records.filter(r => Array.isArray(r) && r[3] === studentFilter)
+
+        // Agrupar por Estudiante + Programa + OCP (para tener una fila por programa/ocp)
+        const groups: Record<string, any> = {}
+
+        filteredRecords.forEach((r: any, i: number) => {
+            if (!Array.isArray(r) || r.length < 9) return
+
+            const key = `${r[3]}-${r[6]}-${r[7]}` // Estudiante-Programa-OCP
+            if (!groups[key]) {
+                groups[key] = {
+                    id: i.toString(),
+                    estudiante: r[3],
+                    programa: r[6],
+                    ocp: r[7],
+                    criterio: r[8],
+                    fecha_inicio: r[2],
+                    estado: r[4],
+                    pre_test: null,
+                    post_test: null,
+                    resultado_g1: null,
+                    resultado_g2: null,
+                    resultado_g3: null,
+                    promedio_generalizacion: 0
+                }
+            }
+
+            const tipo = r[5]
+            const puntaje = parseFloat(r[9])
+
+            if (tipo === 'Inicial' || tipo === 'Asignación') groups[key].pre_test = puntaje
+            if (tipo === 'Final') {
+                groups[key].post_test = puntaje
+                groups[key].estado = r[4] || 'Logrado'
+            }
+            if (tipo === 'Generalización') {
+                // Asignar en orden si no sabemos cuál G es (o si el GAS nos lo da en OCP_Criterio)
+                if (groups[key].resultado_g1 === null) groups[key].resultado_g1 = puntaje
+                else if (groups[key].resultado_g2 === null) groups[key].resultado_g2 = puntaje
+                else if (groups[key].resultado_g3 === null) groups[key].resultado_g3 = puntaje
+            }
+
+            // Actualizar estado si algún registro dice 'Logrado'
+            if (r[4] === 'Logrado') groups[key].estado = 'Logrado'
+        })
+
+        const mappedPrograms = Object.values(groups).map(p => {
+            const gs = [p.resultado_g1, p.resultado_g2, p.resultado_g3].filter(g => g !== null)
+            const prom = gs.length > 0 ? gs.reduce((a, b) => a + b, 0) / gs.length : 0
+            return { ...p, promedio_generalizacion: prom }
+        })
+
+        setProgramasActivos(mappedPrograms)
+
+        // Calcular métricas basadas en los grupos procesados
+        const validRecords = records.filter(r => Array.isArray(r) && r[3])
+        const uniqueStudents = studentFilter === 'all' 
+            ? new Set(validRecords.map(r => r[3].toString().trim())).size
+            : 1
+
+        const totalOpen = mappedPrograms.filter(p => p.estado === 'Abierto').length
+        const totalLogrados = mappedPrograms.filter(p => p.estado === 'Logrado').length
+        
+        const preTests = mappedPrograms.filter(p => p.pre_test !== null).map(p => p.pre_test)
+        const postTests = mappedPrograms.filter(p => p.post_test !== null).map(p => p.post_test)
+
+        setMetrics({
+            programas_abiertos: totalOpen,
+            programas_logrados: totalLogrados,
+            total_estudiantes: uniqueStudents,
+            promedio_pre_test: preTests.length ? preTests.reduce((a, b) => a + b, 0) / preTests.length : 0,
+            promedio_post_test: postTests.length ? postTests.reduce((a, b) => a + b, 0) / postTests.length : 0,
+            total_programas: mappedPrograms.length
+        })
+    }
+
+    useEffect(() => {
+        if (allRecords.length) {
+            processRecords(allRecords, selectedStudent)
+        }
+    }, [selectedStudent])
 
     if (loading) {
         return (
@@ -89,8 +142,20 @@ export default function Dashboard() {
         )
     }
 
-    if (role === 'terapeuta') {
-        return <TerapeutaFlow />
+    if (viewMode === 'flow' && role === 'terapeuta') {
+        return (
+            <div className="animate-fade-in">
+                <div className="container-mobile pt-6 flex justify-end">
+                    <button 
+                        onClick={() => setViewMode('dashboard')}
+                        className="btn-outline px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2"
+                    >
+                        <BarChart3 size={16} /> Ver Dashboard
+                    </button>
+                </div>
+                <TerapeutaFlow onAssignNew={() => {}} />
+            </div>
+        )
     }
 
     if (error) {
@@ -135,7 +200,30 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    <div className="hidden md:flex items-center gap-4 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                        {role === 'terapeuta' && (
+                            <button 
+                                onClick={() => setViewMode('flow')}
+                                className="w-full sm:w-auto btn btn-primary px-6 py-3 rounded-2xl shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
+                            >
+                                <Plus size={20} /> Registrar Sesión
+                            </button>
+                        )}
+                        <select 
+                            value={selectedStudent}
+                            onChange={(e) => setSelectedStudent(e.target.value)}
+                            className="w-full sm:w-auto bg-white border border-slate-200 rounded-2xl px-6 py-3 font-bold text-slate-700 shadow-sm focus:ring-4 focus:ring-blue-100 outline-none min-w-[200px]"
+                        >
+                            <option value="all">Todos los Estudiantes</option>
+                            {Array.from(new Set(allRecords.filter(r => Array.isArray(r)).map(r => r[3])))
+                                .filter(Boolean)
+                                .sort()
+                                .map(name => (
+                                    <option key={name} value={name}>{name}</option>
+                                ))
+                            }
+                        </select>
+                    </div>
                         <div className="flex -space-x-2">
                             {[1, 2, 3].map(i => (
                                 <div key={i} className={`w-8 h-8 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600 shadow-sm`}>
