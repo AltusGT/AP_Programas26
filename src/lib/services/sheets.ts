@@ -7,7 +7,8 @@ const GAS_URL = process.env.NEXT_PUBLIC_GAS_URL;
 
 export async function fetchCatalog() {
     try {
-        const response = await fetch(`${GAS_URL}?api=true&action=getCatalog`);
+        const timestamp = Date.now();
+        const response = await fetch(`${GAS_URL}?api=true&action=getCatalog&t=${timestamp}`, { cache: 'no-store' });
         if (!response.ok) throw new Error('Error al cargar catálogo');
         const rawData = await response.json();
         // Formatear los datos para garantizar que 'criterios' siempre sea un array
@@ -74,7 +75,8 @@ export async function saveCatalogProgram(nombre: string, criterios: string[]) {
 
 export async function fetchBaseData() {
     try {
-        const response = await fetch(`${GAS_URL}?api=true&action=getData`);
+        const timestamp = Date.now();
+        const response = await fetch(`${GAS_URL}?api=true&action=getData&t=${timestamp}`, { cache: 'no-store' });
         if (!response.ok) throw new Error('Error al cargar datos base');
         return await response.json();
     } catch (error) {
@@ -103,13 +105,14 @@ export async function saveSession(records: any[]) {
 
 export async function fetchDashboardData(student?: string, start?: string, end?: string, program?: string) {
     try {
-        let url = `${GAS_URL}?api=true&action=getDashboardData`;
+        const timestamp = Date.now();
+        let url = `${GAS_URL}?api=true&action=getDashboardData&t=${timestamp}`;
         if (student) url += `&student=${encodeURIComponent(student)}`;
         if (start) url += `&start=${start}`;
         if (end) url += `&end=${end}`;
         if (program) url += `&program=${encodeURIComponent(program)}`;
         
-        const response = await fetch(url);
+        const response = await fetch(url, { cache: 'no-store' });
         if (!response.ok) throw new Error('Error al cargar datos del dashboard');
         return await response.json();
     } catch (error) {
