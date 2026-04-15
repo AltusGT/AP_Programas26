@@ -33,13 +33,9 @@ export async function fetchCatalog() {
             if (Array.isArray(parsedCriterios)) {
                 parsedCriterios.forEach(crit => {
                     let c = typeof crit === 'string' ? crit : String(crit);
-                    if (c.includes('\n')) {
-                        finalCriterios.push(...c.split('\n'));
-                    } else if (c.includes(';')) {
-                        finalCriterios.push(...c.split(';'));
-                    } else {
-                        finalCriterios.push(c);
-                    }
+                    // Dividimos exhaustivamente tanto por saltos de línea como por punto y coma.
+                    let partes = c.replace(/\n/g, ';').split(';');
+                    finalCriterios.push(...partes);
                 });
             }
             
