@@ -34,8 +34,8 @@ export async function fetchCatalog() {
             if (Array.isArray(parsedCriterios)) {
                 parsedCriterios.forEach(crit => {
                     let c = typeof crit === 'string' ? crit : String(crit);
-                    // Dividimos exhaustivamente tanto por saltos de línea como por punto y coma.
-                    let partes = c.replace(/\n/g, ';').split(';');
+                    // División EXTREMA: Soporta saltos de línea literales (\\n), saltos reales (\n), y puntos y coma (;)
+                    let partes = c.replace(/\\n/g, ';').replace(/\n/g, ';').split(';');
                     finalCriterios.push(...partes);
                 });
             }
