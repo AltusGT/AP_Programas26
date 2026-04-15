@@ -10,37 +10,45 @@ export async function fetchCatalog() {
         const response = await fetch(`${GAS_URL}?api=true&action=getCatalog`);
         if (!response.ok) throw new Error('Error al cargar catálogo');
         const rawData = await response.json();
-        
         // Formatear los datos para garantizar que 'criterios' siempre sea un array
         return rawData.map((prog: any) => {
             let parsedCriterios = prog.criterios;
+            let finalCriterios: string[] = [];
             
-            // Si G.A.S nos devuelve la celda directamente como un string con saltos de línea o punto y coma
+            // 1. Si llega como un string crudo puro, intentamos parsear JSON o lo forzamos a Array
             if (typeof parsedCriterios === 'string') {
-                if (parsedCriterios.includes('\n')) {
-                    parsedCriterios = parsedCriterios.split('\n');
-                } else if (parsedCriterios.includes(';')) {
-                    parsedCriterios = parsedCriterios.split(';');
-                } else {
-                    // Intento de parsear si fuera JSON stringificado erróneamente devuelto como string
-                    try {
-                        parsedCriterios = JSON.parse(parsedCriterios);
-                    } catch (e) {
-                        parsedCriterios = [parsedCriterios]; // Es un solo criterio
+                try {
+                    let parsedJson = JSON.parse(parsedCriterios);
+                    if (Array.isArray(parsedJson)) {
+                        parsedCriterios = parsedJson;
+                    } else {
+                        parsedCriterios = [parsedCriterios];
                     }
+                } catch (e) {
+                    parsedCriterios = [parsedCriterios];
                 }
             }
             
-            // Limpiamos los criterios para evitar espacios en blanco
+            // 2. Ahora aseguramos que es un Array. Iteramos para expandir strings combinados (ej: "uno ; dos")
             if (Array.isArray(parsedCriterios)) {
-                parsedCriterios = parsedCriterios.map(c => typeof c === 'string' ? c.trim() : String(c)).filter(c => c.length > 0);
-            } else {
-                parsedCriterios = [];
+                parsedCriterios.forEach(crit => {
+                    let c = typeof crit === 'string' ? crit : String(crit);
+                    if (c.includes('\n')) {
+                        finalCriterios.push(...c.split('\n'));
+                    } else if (c.includes(';')) {
+                        finalCriterios.push(...c.split(';'));
+                    } else {
+                        finalCriterios.push(c);
+                    }
+                });
             }
+            
+            // 3. Limpiamos espacios y eliminamos vacíos
+            finalCriterios = finalCriterios.map(c => c.trim()).filter(c => c.length > 0);
             
             return {
                 ...prog,
-                criterios: parsedCriterios
+                criterios: finalCriterios
             };
         });
     } catch (error) {
