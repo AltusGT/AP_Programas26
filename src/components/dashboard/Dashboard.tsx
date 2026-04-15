@@ -173,7 +173,10 @@ export default function Dashboard() {
 
     // VISTA 1: Selector de Alumno
     if (!selectedStudent) {
-        const filteredStudents = studentsList.filter(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
+        const filteredStudents = (studentsList || []).filter(s => {
+            if (!s) return false;
+            return String(s).toLowerCase().includes(String(searchTerm || '').toLowerCase());
+        })
 
         return (
             <div className="container-mobile py-12 lg:py-20 animate-fade-in">
@@ -202,15 +205,15 @@ export default function Dashboard() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredStudents.map((name) => (
                             <button 
-                                key={name}
-                                onClick={() => handleSelectStudent(name)}
+                                key={String(name) + Math.random()}
+                                onClick={() => handleSelectStudent(String(name))}
                                 className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all group flex flex-col items-center gap-6"
                             >
                                 <div className="w-20 h-20 bg-gradient-to-br from-blue-50 to-blue-100 rounded-[2rem] flex items-center justify-center text-blue-600 text-3xl font-black group-hover:scale-110 transition-transform">
-                                    {name.charAt(0)}
+                                    {String(name).charAt(0).toUpperCase()}
                                 </div>
                                 <div className="text-center">
-                                    <h3 className="text-xl font-black text-slate-900 group-hover:text-blue-600 transition-colors">{name}</h3>
+                                    <h3 className="text-xl font-black text-slate-900 group-hover:text-blue-600 transition-colors">{String(name)}</h3>
                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Ver Dashboard</p>
                                 </div>
                                 <ChevronRight className="text-slate-200 group-hover:text-blue-500 transition-colors" />
