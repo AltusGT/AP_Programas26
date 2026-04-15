@@ -9,7 +9,40 @@ export async function fetchCatalog() {
     try {
         const response = await fetch(`${GAS_URL}?api=true&action=getCatalog`);
         if (!response.ok) throw new Error('Error al cargar catálogo');
-        return await response.json();
+        const rawData = await response.json();
+        
+        // Formatear los datos para garantizar que 'criterios' siempre sea un array
+        return rawData.map((prog: any) => {
+            let parsedCriterios = prog.criterios;
+            
+            // Si G.A.S nos devuelve la celda directamente como un string con saltos de línea o punto y coma
+            if (typeof parsedCriterios === 'string') {
+                if (parsedCriterios.includes('\n')) {
+                    parsedCriterios = parsedCriterios.split('\n');
+                } else if (parsedCriterios.includes(';')) {
+                    parsedCriterios = parsedCriterios.split(';');
+                } else {
+                    // Intento de parsear si fuera JSON stringificado erróneamente devuelto como string
+                    try {
+                        parsedCriterios = JSON.parse(parsedCriterios);
+                    } catch (e) {
+                        parsedCriterios = [parsedCriterios]; // Es un solo criterio
+                    }
+                }
+            }
+            
+            // Limpiamos los criterios para evitar espacios en blanco
+            if (Array.isArray(parsedCriterios)) {
+                parsedCriterios = parsedCriterios.map(c => typeof c === 'string' ? c.trim() : String(c)).filter(c => c.length > 0);
+            } else {
+                parsedCriterios = [];
+            }
+            
+            return {
+                ...prog,
+                criterios: parsedCriterios
+            };
+        });
     } catch (error) {
         console.error('fetchCatalog error:', error);
         return [];
