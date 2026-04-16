@@ -1,0 +1,154 @@
+
+> ap_programas26@1.0.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/7) ...
+Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {fallback: function fallback, children: ...}
+             ^^^^^^^^^^^^^^^^^
+    at e_ (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:140758)
+    at Object.toJSON (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135777)
+    at stringify (<anonymous>)
+    at eE (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142242)
+    at eT (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142721)
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at Timeout._onTimeout (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:150805)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7) {
+  digest: '1873896423'
+}
+Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {fallback: function fallback, children: ...}
+             ^^^^^^^^^^^^^^^^^
+    at e_ (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:140758)
+    at Object.toJSON (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135777)
+    at stringify (<anonymous>)
+    at eE (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142242)
+    at eT (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142721)
+    at Timeout._onTimeout (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135497)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7) {
+  digest: '3023197507'
+}
+Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {fallback: function fallback, children: ...}
+             ^^^^^^^^^^^^^^^^^
+    at e_ (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:140758)
+    at Object.toJSON (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135777)
+    at stringify (<anonymous>)
+    at eE (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142242)
+    at eT (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142721)
+    at Timeout._onTimeout (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135497)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7) {
+  digest: '3023197507'
+}
+   Generating static pages (1/7) 
+   Generating static pages (3/7) 
+   Generating static pages (5/7) 
+ ⚠ Sending SIGTERM signal to Next.js build worker due to timeout of 60 seconds. Subsequent errors may be a result of the worker exiting.
+ ⚠ Restarted static page generation for / because it took more than 60 seconds
+ ⚠ See more info here https://nextjs.org/docs/messages/static-page-generation-timeout
+Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {fallback: function fallback, children: ...}
+             ^^^^^^^^^^^^^^^^^
+    at e_ (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:140758)
+    at Object.toJSON (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135777)
+    at stringify (<anonymous>)
+    at eE (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142242)
+    at eT (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142721)
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at Timeout._onTimeout (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:150805)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7) {
+  digest: '1873896423'
+}
+Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {fallback: function fallback, children: ...}
+             ^^^^^^^^^^^^^^^^^
+    at e_ (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:140758)
+    at Object.toJSON (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135777)
+    at stringify (<anonymous>)
+    at eE (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142242)
+    at eT (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142721)
+    at Timeout._onTimeout (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135497)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7) {
+  digest: '3023197507'
+}
+Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {fallback: function fallback, children: ...}
+             ^^^^^^^^^^^^^^^^^
+    at e_ (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:140758)
+    at Object.toJSON (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135777)
+    at stringify (<anonymous>)
+    at eE (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142242)
+    at eT (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142721)
+    at Timeout._onTimeout (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135497)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7) {
+  digest: '3023197507'
+}
+ ⚠ Sending SIGTERM signal to Next.js build worker due to timeout of 60 seconds. Subsequent errors may be a result of the worker exiting.
+ ⚠ Restarted static page generation for / because it took more than 60 seconds
+Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {fallback: function fallback, children: ...}
+             ^^^^^^^^^^^^^^^^^
+    at e_ (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:140758)
+    at Object.toJSON (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135777)
+    at stringify (<anonymous>)
+    at eE (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142242)
+    at eT (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142721)
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at Timeout._onTimeout (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:150805)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7) {
+  digest: '1873896423'
+}
+Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {fallback: function fallback, children: ...}
+             ^^^^^^^^^^^^^^^^^
+    at e_ (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:140758)
+    at Object.toJSON (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135777)
+    at stringify (<anonymous>)
+    at eE (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142242)
+    at eT (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142721)
+    at Timeout._onTimeout (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135497)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7) {
+  digest: '3023197507'
+}
+Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {fallback: function fallback, children: ...}
+             ^^^^^^^^^^^^^^^^^
+    at e_ (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:140758)
+    at Object.toJSON (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135777)
+    at stringify (<anonymous>)
+    at eE (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142242)
+    at eT (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142721)
+    at Timeout._onTimeout (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135497)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7) {
+  digest: '3023197507'
+}
+ ⚠ Sending SIGTERM signal to Next.js build worker due to timeout of 60 seconds. Subsequent errors may be a result of the worker exiting.
+
+> Build error occurred
+Error: Static page generation for / is still timing out after 3 attempts. See more info here https://nextjs.org/docs/messages/static-page-generation-timeout
+    at onRestart (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/build/index.js:292:27)
+    at /Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/lib/worker.js:104:40
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async /Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/export/index.js:450:20
+    at async Span.traceAsyncFn (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/trace/trace.js:154:20)
+    at async /Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/export/index.js:448:24
+    at async Promise.all (index 5)
+    at async exportAppImpl (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/export/index.js:440:21)
+    at async /Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/export/index.js:623:16
+    at async Span.traceAsyncFn (/Users/raulmaroto/Documents/01 Proyectos 🎯& ⏰/Antigravity/AP_programas26/node_modules/next/dist/trace/trace.js:154:20)
