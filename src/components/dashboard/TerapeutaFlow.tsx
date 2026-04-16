@@ -191,7 +191,7 @@ export default function TerapeutaFlow({ onAssignNew }: { onAssignNew?: () => voi
                                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={24} />
                                 <input
                                     type="text"
-                                    placeholder="Buscar por nombre..."
+                                    placeholder=""
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="input pl-14 h-16 rounded-2xl text-lg font-bold"

@@ -195,7 +195,7 @@ export default function Dashboard() {
                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={24} />
                         <input 
                             type="text" 
-                            placeholder="Buscar alumno por nombre..."
+                            placeholder=""
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full bg-white border-2 border-slate-100 rounded-[2.5rem] pl-16 pr-8 py-7 text-xl font-bold text-slate-800 shadow-xl shadow-slate-200/50 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all"

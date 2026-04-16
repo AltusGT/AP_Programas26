@@ -304,7 +304,7 @@ export default function EstudiantesPage() {
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300" />
                 <input
                     type="text"
-                    placeholder="Buscar estudiante..."
+                    placeholder=""
                     className="input pl-14 h-16 rounded-[20px] text-lg border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-50 shadow-sm"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}

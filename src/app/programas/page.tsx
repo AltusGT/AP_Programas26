@@ -191,7 +191,7 @@ export default function ProgramasCatalogPage() {
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300" />
                 <input
                     type="text"
-                    placeholder="Buscar programa por nombre..."
+                    placeholder=""
                     className="input pl-14 h-16 rounded-[20px] text-lg border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 shadow-sm"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
