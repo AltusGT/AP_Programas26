@@ -32,6 +32,9 @@ export type ProgramaOCPUpdate = Updates<'programas_ocp'>
 // View types
 export type ProgramaActivo = Database['public']['Views']['vista_programas_activos']['Row'] & {
     id: string; // Ensure id is indexed
+    estado?: 'Abierto' | 'Logrado';
+    post_test?: number | null;
+    fecha_final?: string | null;
 }
 export type MetricasDashboard = Database['public']['Views']['vista_metricas_dashboard']['Row']
 
