@@ -133,22 +133,36 @@
    TYPOGRAPHY - Open Sans & Roboto
    ============================================ */
 
-/* Headings - Open Sans */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-.heading {
-  font-family: 'Open Sans', sans-serif;
+/* 1. Títulos Principales */
+h1, #view-title {
+  font-family: var(--font-open-sans), sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text-primary);
+  letter-spacing: -0.025em;
+}
+
+/* 2. Subtítulos */
+h2, h3 {
+  font-family: var(--font-open-sans), sans-serif;
+  font-size: clamp(1.2rem, 3vw, 1.5rem);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-text-primary);
+  letter-spacing: -0.025em;
+}
+
+/* Otros encabezados */
+h4, h5, h6, .heading {
+  font-family: var(--font-open-sans), sans-serif;
   font-weight: 600;
   color: var(--color-text-primary);
   line-height: 1.2;
   letter-spacing: -0.025em;
 }
 
-/* Body Text - Roboto */
+/* 3. Cuerpo de texto (body) */
 body,
 p,
 .body-text,
@@ -156,8 +170,16 @@ input,
 textarea,
 select,
 button {
-  font-family: 'Roboto', sans-serif;
+  font-family: var(--font-roboto), sans-serif;
   color: var(--color-text-primary);
+}
+
+/* 4. Textos pequeños o de apoyo */
+.text-xs,
+.text-sm,
+.supporting-text {
+  font-size: 14px !important;
+  font-weight: 300 !important;
 }
 
 /* Typography Utilities */
@@ -227,8 +249,8 @@ body {
   margin: 0;
   padding: 0;
   background-color: var(--color-bg-secondary);
-  font-size: var(--text-base);
-  line-height: 1.5;
+  font-size: 0.95rem;
+  line-height: 1.6;
   overflow-x: hidden;
 }
 
